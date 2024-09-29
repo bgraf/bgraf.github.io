@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TSP subtour elimination with lazy constraint callbacks in ORTools | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },   
+                { left: '$$', right: '$$', display: true },     
+                { left: '\\(', right: '\\)', display: false },  
+            ],
+            throwOnError: false
+        });
+    });
+</script>
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:grid; grid-template-columns: 1fr 2fr 1fr;">
+      <div></div>
+      <div style="text-align:center;">
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div>
+        <nav style="display:flex; flex-direction: column; align-items: flex-end; gap:5px;">
+            <a title="Content tree" href="/links"><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 7.26214 17.9831 7.5207 17.9504 7.77457C19.77 8.80413 21 10.7575 21 13C21 16.3137 18.3137 19 15 19H13V22H11V19H8.5C5.46243 19 3 16.5376 3 13.5C3 11.2863 4.30712 9.37966 6.19098 8.50704C6.06635 8.02551 6 7.52039 6 7ZM7.00964 10.3319C5.82176 10.8918 5 12.1008 5 13.5C5 15.433 6.567 17 8.5 17H15C17.2091 17 19 15.2091 19 13C19 11.3056 17.9461 9.85488 16.4544 9.27234L15.6129 8.94372C15.7907 8.30337 16 7.67183 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 8.30783 8.6266 9.46903 9.60019 10.2005L8.39884 11.7995C7.85767 11.3929 7.38716 10.8963 7.00964 10.3319Z"></path></svg></a>
+            <a title="About" href=""><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 22H18V20C18 18.3431 16.6569 17 15 17H9C7.34315 17 6 18.3431 6 20V22H4V20C4 17.2386 6.23858 15 9 15H15C17.7614 15 20 17.2386 20 20V22ZM12 13C8.68629 13 6 10.3137 6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 10.3137 15.3137 13 12 13ZM12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"></path></svg></a>
+            <a style="background-color: #ffea79;" title="RSS feed" href="/index.xml"><svg style="width:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z"></path></svg></a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">TSP subtour elimination with lazy constraint callbacks in ORTools</span></h1>
+
+<h2 class="date">2024-09-27</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/optimization">optimization</a>
+    
+        <a href="/tags/ortools">ortools</a>
+    
+        <a href="/tags/python">python</a>
+    
+        <a href="/tags/mathopt">mathopt</a>
+    
+        <a href="/tags/tsp">TSP</a>
+    
+    </div>
+
+</div>
+
+
+
+<main>
+<p>Most MIP solver software packages support the concept of <em>callbacks</em> to interact with the solver during the solution process.
+Callbacks can be used to track the process, terminate early, generate user cuts to tighten the bounds on relaxed problems,
+take branching decisions and in case of the <em>lazy constraint callback</em> generate constraints on the fly.</p>
+<p>Generating constraints during the solution process makes sense when</p>
+<ol>
+<li>the number of constraints is relatively large (e.g. exponentially) so adding them all upfront would take too much time and</li>
+<li>the number of constraints required to reach an integer optimal solution for a given instance is relatively small compared to the total number of constraints.</li>
+</ol>
+<p>So, the solution process is:</p>
+<ol>
+<li>Create an incomplete model of the problem without the large set of constraints</li>
+<li>Let the MIP-solver produce an integer feasible solution and present it to the callback</li>
+<li>Inspect solution and find violated constraints currently not part of the model. If there are none, we&rsquo;re done. If there are violations, add them to the model.</li>
+<li>Go back to 2.</li>
+</ol>
+<h2 id="minimal-example">Minimal Example</h2>
+<p>For the first example we choose a trivial model with optimal solution \(x^\star=10\).
+</p>
+\[
+    \begin{align*}
+        && \min x \\
+        \text{s.t.} && \textcolor{blue}{x} &\textcolor{blue}{\geq} \textcolor{blue}{10} \\
+        && x &\in \mathbb{N}
+    \end{align*}
+\]
+<p>
+The constraint in blue will be added in a lazy constraint callback.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <a class="highlight-url" href="https://github.com/bgraf/code-examples/blob/main/001_tsp_subtour_elimination/callback_example.py">ext</a>
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">from</span> <span class="nn">ortools.math_opt.python</span> <span class="kn">import</span> <span class="n">mathopt</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">model</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Example&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">x</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;X&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="n">model</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">callback</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">res</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">solution</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">10.0</span><span class="p">:</span>                 <span class="c1"># identify violated constraint</span>
+</span></span><span class="line"><span class="cl">        <span class="n">res</span><span class="o">.</span><span class="n">add_lazy_constraint</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mf">10.0</span><span class="p">)</span>      <span class="c1"># add the constraint</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">res</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">res</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">model</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">solver_type</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">GSCIP</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">callback_reg</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackRegistration</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">events</span><span class="o">=</span><span class="p">{</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">MIP_SOLUTION</span><span class="p">},</span>    <span class="c1"># run callback on integer feasible solutions</span>
+</span></span><span class="line"><span class="cl">        <span class="n">add_lazy_constraints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>              <span class="c1"># allow callback to generate lazy constraints</span>
+</span></span><span class="line"><span class="cl">    <span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cb</span><span class="o">=</span><span class="n">callback</span><span class="p">,</span>                                <span class="c1"># the callback</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">print</span><span class="p">(</span><span class="s2">&#34;obj=&#34;</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">objective_value</span><span class="p">(),</span> <span class="s2">&#34;x=&#34;</span><span class="p">,</span> <span class="n">res</span><span class="o">.</span><span class="n">variable_values</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></span></span></code></pre>
+</div><p>Running the exaple yields:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-sh" data-lang="sh"><span class="line"><span class="cl">$ python3 ./callback_example.py
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 0.0
+</span></span><span class="line"><span class="cl">CALLBACK - generating constraint
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 100000.0
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 50000.0
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 10.0
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 49999.0
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 25005.0
+</span></span><span class="line"><span class="cl">CALLBACK: <span class="nv">x</span><span class="o">=</span> 10.0
+</span></span><span class="line"><span class="cl"><span class="nv">obj</span><span class="o">=</span> 10.0 <span class="nv">x</span><span class="o">=</span> 10.0</span></span></code></pre>
+</div><p>When running the code we see the first solution presented to the callback is \(x=0\).
+This violates our true model so we add the constraint.
+All subsequent solutions presented to the callback satisfy the newly added constraint.</p>
+<h2 id="subtour-elimination-for-the-tsp">Subtour elimination for the TSP</h2>
+<p>There are many <a href="https://en.wikipedia.org/wiki/Travelling_salesman_problem#Integer_linear_programming_formulations">MIP formulations for the TSP</a>.
+The Miller-Tucker-Zemlin formulation has polynomially many variables and constraints, yet doesn&rsquo;t work that well in practice.
+Formulations based on Dantzig-Fulkerson-Johnson work better but have exponentially many constraints.
+These constraints ensure that the resulting tour is actually a single tour through all nodes and not a set of disjoint smaller tours.</p>
+<p>To make comparison easy, I&rsquo;ll reuse the problem (<em>a280.tsp</em> from <a href="http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/">TSPLIB</a>) and algorithm from the
+<a href="https://ampl.com/colab/notebooks/travelling-salesman-problem-with-subtour-elimination.html">AMPL</a> documentation.
+The tutorial for the <a href="https://developers.google.com/optimization/routing/tsp#circuit_board">ORTools routing module</a>
+also considers the same problem, but with a local search method.</p>
+<p>So, we focus on a Dantzig-Fulkerson-Johnson style formulation (1)-(4) to showcase the lazy constraint callback:
+</p>
+\[
+    \begin{align}
+        && \min &\sum_{e \in E}c_ex_e \\
+        \text{s.t.} && \sum_{e \in E \colon v \in e}x_e &= 2 && \forall v \in V\\
+        && \sum_{e = \{u,v\} \in E \colon u \in U,\ v \not\in U}x_e &\geq 2 && \forall U \subset V \\
+        && x_e &\in \{0, 1\}
+    \end{align}
+\]
+<p>
+Constraints (3) ensure that any proper node subset \(U \subset V\) is connected to the remaining nodes \(U' = V\setminus U\) via at least two edges as demonstrated in the figure below.
+This differs from the subtour elimination constraint shown on Wikipedia but has the same effect.</p>
+<figure><img src="/posts/ortools-lazy-constraint-callbacks-tsp/cut.png"
+    alt="Subtour elimination forces flows between a proper node subset (subtour) and all other nodes." width="100%"><figcaption>
+      <p>Subtour elimination forces flows between a proper node subset (subtour) and all other nodes.</p>
+    </figcaption>
+</figure>
+
+<h3 id="implementation">Implementation</h3>
+<p>Full implementation can be found <a href="https://github.com/bgraf/code-examples/blob/main/001_tsp_subtour_elimination/subtour_elimination.py">here</a>.</p>
+<p>We will start by creating the model (1), (2), (4) and add violated constraints (3) on the fly during the solution process.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">problem</span> <span class="o">=</span> <span class="n">read_problem</span><span class="p">()</span>    <span class="c1"># returns Problem(size: int, distances: NDArray)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">model</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;TSP&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># symmetric edge variables X_ij</span>
+</span></span><span class="line"><span class="cl"><span class="n">edges</span> <span class="o">=</span> <span class="p">[</span>
+</span></span><span class="line"><span class="cl">    <span class="n">Edge</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">t</span><span class="o">=</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">        <span class="n">x</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">add_integer_variable</span><span class="p">(</span><span class="n">lb</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">ub</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;X_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">j</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">problem</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># minimize total distance</span>
+</span></span><span class="line"><span class="cl"><span class="n">model</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">problem</span><span class="o">.</span><span class="n">distances</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">t</span><span class="p">]</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># constraints (2) forall nodes</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">problem</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">model</span><span class="o">.</span><span class="n">add_linear_constraint</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">sum</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">x</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span></span></span></code></pre>
+</div><h4 id="callback">Callback</h4>
+<p>The callback determines the subtours from the solver-provided data.
+If there is just a single tour, no constraint is violated so we don&rsquo;t need to do anything.
+Otherwise we create a lazy constraint for each subtour, forcing flow between the nodes of the subtour and all other nodes.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <a class="highlight-url" href="https://github.com/bgraf/code-examples/blob/591397d9bed0081b66659737b6563c4eafa9475b/001_tsp_subtour_elimination/subtour_elimination.py#L84">ext</a>
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">subtours</span><span class="p">(</span><span class="n">values</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Transforms a MIP solution into a set of tours.&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sol</span> <span class="o">=</span> <span class="p">{</span><span class="n">e</span><span class="o">.</span><span class="n">t</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span> <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">x</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">tours</span> <span class="o">=</span> <span class="p">[]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">sol</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">sol</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="n">tour</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="k">while</span> <span class="p">(</span><span class="n">t</span> <span class="o">:=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">t</span><span class="p">,</span> <span class="n">sol</span><span class="p">),</span> <span class="kc">None</span><span class="p">)):</span>
+</span></span><span class="line"><span class="cl">            <span class="n">sol</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">v</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span> <span class="o">==</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">            <span class="n">tour</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">tours</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tour</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">tours</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">lazy_constraint_callback</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackData</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="s2">&#34;&#34;&#34;Adds constraints to eliminate subtours.&#34;&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">res</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackResult</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Gather all subtours from the current integer feasible solution</span>
+</span></span><span class="line"><span class="cl">    <span class="n">tours</span> <span class="o">=</span> <span class="n">subtours</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">solution</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tours</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># Only a single tour, that&#39;s great, nothing to do!</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">res</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># Add a constraint for each subtour</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">tour</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tours</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">tour_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">tour</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># All edges between the nodes of the subtour and the nodes not in the subtour</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cut_edges</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">            <span class="n">e</span><span class="o">.</span><span class="n">x</span>
+</span></span><span class="line"><span class="cl">            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">tour_nodes</span><span class="p">)</span> <span class="o">^</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">tour_nodes</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line hl"><span class="cl">        <span class="n">res</span><span class="o">.</span><span class="n">add_lazy_constraint</span><span class="p">(</span><span class="n">cut_edges</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">res</span></span></span></code></pre>
+</div><h4 id="solving">Solving</h4>
+<p>Solving works the same as in our trivial example model above.
+The callback registration ensures that our callback is called on integer feasible solutions
+and that we are allowed to add lazy constraints in the callback.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="n">res</span> <span class="o">=</span> <span class="n">mathopt</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">    <span class="n">model</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">solver_type</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolverType</span><span class="o">.</span><span class="n">GSCIP</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="n">params</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">SolveParameters</span><span class="p">(</span><span class="n">enable_output</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="n">callback_reg</span><span class="o">=</span><span class="n">mathopt</span><span class="o">.</span><span class="n">CallbackRegistration</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">events</span><span class="o">=</span><span class="p">{</span><span class="n">mathopt</span><span class="o">.</span><span class="n">Event</span><span class="o">.</span><span class="n">MIP_SOLUTION</span><span class="p">},</span>
+</span></span><span class="line"><span class="cl">        <span class="n">add_lazy_constraints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">    <span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="n">cb</span><span class="o">=</span><span class="n">lazy_constraint_callback</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span></span></span></code></pre>
+</div><h3 id="results">Results</h3>
+<p>On my computer the solution process with SCIP takes around 65 seconds and 16 iterations of subtour elimination to arrive at a solution with total cost 2586.7696.
+In the AMPL tutorial the Gurobi solver is used as a backend, solving their model in around 25 seconds.</p>
+<p>Animation of all the solutions presented to the lazy constraint callback:
+<video controls width="100%">
+<source src="./anim.webm" type="video/webm" />
+</video></p>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

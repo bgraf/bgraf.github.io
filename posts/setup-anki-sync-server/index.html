@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Setting up a personal Anki synchronization server | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:grid; grid-template-columns: 1fr 2fr 1fr;">
+      <div></div>
+      <div style="text-align:center;">
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div>
+        <nav style="display:flex; flex-direction: column; align-items: flex-end; gap:5px;">
+            <a title="Content tree" href="/links"><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 7.26214 17.9831 7.5207 17.9504 7.77457C19.77 8.80413 21 10.7575 21 13C21 16.3137 18.3137 19 15 19H13V22H11V19H8.5C5.46243 19 3 16.5376 3 13.5C3 11.2863 4.30712 9.37966 6.19098 8.50704C6.06635 8.02551 6 7.52039 6 7ZM7.00964 10.3319C5.82176 10.8918 5 12.1008 5 13.5C5 15.433 6.567 17 8.5 17H15C17.2091 17 19 15.2091 19 13C19 11.3056 17.9461 9.85488 16.4544 9.27234L15.6129 8.94372C15.7907 8.30337 16 7.67183 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 8.30783 8.6266 9.46903 9.60019 10.2005L8.39884 11.7995C7.85767 11.3929 7.38716 10.8963 7.00964 10.3319Z"></path></svg></a>
+            <a title="About" href=""><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 22H18V20C18 18.3431 16.6569 17 15 17H9C7.34315 17 6 18.3431 6 20V22H4V20C4 17.2386 6.23858 15 9 15H15C17.7614 15 20 17.2386 20 20V22ZM12 13C8.68629 13 6 10.3137 6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 10.3137 15.3137 13 12 13ZM12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"></path></svg></a>
+            <a style="background-color: #ffea79;" title="RSS feed" href="/index.xml"><svg style="width:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z"></path></svg></a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Setting up a personal Anki synchronization server</span></h1>
+
+<h2 class="date">2022-12-14</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/anki">Anki</a>
+    
+        <a href="/tags/ankidroid">AnkiDroid</a>
+    
+        <a href="/tags/anki-sync-server">anki-sync-server</a>
+    
+    </div>
+
+</div>
+
+
+<nav id="TableOfContents">
+  <ol>
+    <li><a href="#complication">Complication</a></li>
+    <li><a href="#server">Server</a>
+      <ol>
+        <li><a href="#nginx-configuration">NGINX configuration</a></li>
+        <li><a href="#container">Container</a></li>
+        <li><a href="#certificates-and-keys">Certificates and Keys</a></li>
+        <li><a href="#running">Running</a></li>
+      </ol>
+    </li>
+    <li><a href="#ankidroid">AnkiDroid</a></li>
+    <li><a href="#wrapup">Wrapup</a></li>
+  </ol>
+</nav>
+
+
+<main>
+<blockquote class="warning"><p>2024-09-22: The setup described below is <strong>outdated</strong>.</p>
+</blockquote>
+<p>The spaced-repetition software Anki is supported by a centralized service allowing users to synchronize their flashcards between different devices and apps (desktops, mobile phones, etc.). The default service is called Ankiweb and free to use, but lacks encryption and should be used with care when cards contain confidential data. In this article I describe how to setup your personal synchronization server and show why it&rsquo;s more complex than it would need to be.</p>
+<p>Other synchronization servers can be used instead of Ankiweb. Multiple implementations of the server software exist, e.g. <a href="https://github.com/ankicommunity/anki-sync-server">anki-sync-server</a> written in Python or <a href="https://github.com/ankicommunity/anki-sync-server-rs">anki-sync-server-rs</a> written in Rust. Synchronizing to a custom synchronization server is configurable in AnkiDroid, but the desktop version requires the additional plugin <a href="https://ankiweb.net/shared/info/358444159">custom sync server redirector</a>.</p>
+<h2 id="complication">Complication</h2>
+<p>Setting up a synchronization server by itself isn&rsquo;t that much of a problem. The complication arises due to a design decision that <strong>AnkiDroid communicates only over HTTPS</strong>, not HTTP. While having communication encrypted over HTTPS is favorable, it&rsquo;s a bit of overkill if all the relevant communication stays inside your own local network. From my perspective, making HTTPS default and having a HTTP option could save a lot of trouble for this exact use case.</p>
+<p>Besides setting up the server we also need to:</p>
+<ul>
+<li>Setup a reverse proxy providing TLS for the synchronization server.</li>
+<li>Generate and maintain a Root-CA key and certificate.</li>
+<li>Generate and maintain a Server key and certificate referencing our own Root-CA.</li>
+<li>Copy the Root-CAs certificate to the Android phone.</li>
+</ul>
+<h2 id="server">Server</h2>
+<p>We will create a Docker container hosting the anki-sync-server for flashcard synchronization and an NGINX reverse proxy for TLS support.</p>
+<figure><img src="./arch.png">
+</figure>
+
+<p>For data persistence we will mount a local folder <code>data/</code> into the container at <code>/opt/ankisync</code>. This <code>data/</code> folder will also contain the server certificate and key. We will create the certificates and keys below, after the container is setup.</p>
+<h3 id="nginx-configuration">NGINX configuration</h3>
+<p>We tell NGINX our computer name for redirects, in the following example it&rsquo;s <code>mycomputer</code> and should be replaced with an appropriate value.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-nginx" data-lang="nginx"><span class="line"><span class="cl"><span class="k">server</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">listen</span> <span class="mi">80</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">return</span> <span class="mi">301</span> <span class="s">https://</span><span class="nv">$host$request_uri</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">server</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">listen</span> <span class="mi">443</span> <span class="s">ssl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">listen</span> <span class="s">[::]:443</span> <span class="s">ssl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">server_name</span> <span class="s">mycomputer</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="s">access_log</span>            <span class="s">/var/log/nginx/ankisync.access.log</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kn">ssl_certificate</span>       <span class="s">/opt/ankisync/data/cert.pem</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">ssl_certificate_key</span>   <span class="s">/opt/ankisync/data/key.pem</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kn">location</span> <span class="s">/</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_set_header</span>        <span class="s">Host</span> <span class="nv">$host</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_set_header</span>        <span class="s">X-Real-IP</span> <span class="nv">$remote_addr</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_set_header</span>        <span class="s">X-Forwarded-For</span> <span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_set_header</span>        <span class="s">X-Forwarded-Proto</span> <span class="nv">$scheme</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_pass</span>          <span class="s">http://localhost:27701/</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_read_timeout</span>  <span class="mi">90</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kn">proxy_redirect</span>      <span class="s">http://localhost:27701</span> <span class="s">https://mycomputer:27701</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre>
+</div><h3 id="container">Container</h3>
+<p>First, the we create a Dockerfile for our container.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-Dockerfile" data-lang="Dockerfile"><span class="line"><span class="cl"><span class="k">from</span><span class="s"> ubuntu:22.04</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="c"># Install packages</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">RUN</span> apt update <span class="o">&amp;&amp;</span> <span class="se">\ </span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span>    apt install -y git python3 python3-pip nginx neovim <span class="o">&amp;&amp;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>    mkdir -p /opt/ankisync<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">WORKDIR</span><span class="s"> /opt/ankisync</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">RUN</span> git clone https://github.com/ankicommunity/anki-sync-server.git <span class="o">&amp;&amp;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>    pip3 install -r anki-sync-server/src/requirements.txt <span class="o">&amp;&amp;</span> <span class="se">\
+</span></span></span><span class="line"><span class="cl"><span class="se"></span>    pip3 install -e anki-sync-server/src/<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">COPY</span> nginx.conf /etc/nginx/sites-available/default<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="c"># Default setup</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_HOST</span><span class="o">=</span><span class="m">0</span>.0.0.0<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_PORT</span><span class="o">=</span><span class="m">27701</span>
+</span></span><span class="line"><span class="cl"><span class="k">ENV</span> <span class="nv">ANKISYNCD_BASE_URL</span><span class="o">=</span>/sync/<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_BASE_MEDIA_URL</span><span class="o">=</span>/msync/<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_URL</span><span class="o">=</span>http://<span class="si">${</span><span class="nv">ANKISYNCD_HOST</span><span class="si">}</span>:<span class="si">${</span><span class="nv">ANKISYNCD_PORT</span><span class="si">}</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="c"># Our own setup</span><span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_DATA_ROOT</span><span class="o">=</span>/opt/ankisync/data/collections<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_AUTH_DB_PATH</span><span class="o">=</span>/opt/ankisync/data/auth.db<span class="err">
+</span></span></span><span class="line"><span class="cl"><span class="err"></span><span class="k">ENV</span> <span class="nv">ANKISYNCD_SESSION_DB_PATH</span><span class="o">=</span>/opt/ankisync/data/session.db</span></span></code></pre>
+</div><p>Next we wrap this docker image in a docker compose setup to ease the build and running.</p>
+<p>The default port of anki-sync-server is <code>27701</code>. We&rsquo;re using the same setup, so our containerized anki-sync-server will listen on port <code>27701</code> while the NGINX reverse proxy will listen on HTTPS default port <code>443</code>. We map the host port <code>27701</code> to the container port <code>443</code> so we can access our synchronization server on the default port and get the TLS support.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-YAML" data-lang="YAML"><span class="line"><span class="cl"><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;3.9&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">services</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="nt">anki-sync-service</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l">.</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">ports</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="s2">&#34;27701:443&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span>- <span class="l">./data:/opt/ankisync/data</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;bash -c &#39;service nginx start &amp;&amp; python3 -m ankisyncd&#39;&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">stdin_open</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="nt">tty</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span></span></span></code></pre>
+</div><h3 id="certificates-and-keys">Certificates and Keys</h3>
+<ul>
+<li>To create our own root-CA we use the tool <a href="https://github.com/FiloSottile/mkcert">mkcert</a>. Mkcert can install a custom root-CA to a system and generate server certificates and clients referencing this root-CA.</li>
+<li>Installation of a root-CA is done via <code>mkcert -install</code>. The root-CA&rsquo;s certificate and key are stored in the folder given by <code>mkcert -CAROOT</code>.</li>
+<li>Next we enter our <code>data/</code> folder and create a server certificate and key using <code>mkcert mycomputer localhost &lt;other names&gt;</code> and store the resulting files as <code>key.pem</code> and <code>cert.pem</code> respectively.</li>
+</ul>
+<h3 id="running">Running</h3>
+<p>Using <code>docker compose up</code> we start the service. With <code>docker compose exec anki-sync-service /bin/bash</code> from another terminal we can enter the container and add anki synchronization credentials (username and password):</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ python3 -m ankisyncd_cli adduser myuser
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Loaded config from /opt/ankisync/anki-sync-server/src/ankisyncd.conf
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Setting base_url from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Setting session_db_path from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Setting data_root from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Setting port from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,684<span class="o">]</span>:INFO:ankisyncd.config:Setting base_media_url from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,685<span class="o">]</span>:INFO:ankisyncd.config:Setting host from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,685<span class="o">]</span>:INFO:ankisyncd.config:Setting auth_db_path from ENV
+</span></span><span class="line"><span class="cl"><span class="o">[</span>2022-12-14 16:00:00,685<span class="o">]</span>:INFO:ankisyncd.config:Setting url from ENV
+</span></span><span class="line"><span class="cl">Enter password <span class="k">for</span> myuser:</span></span></code></pre>
+</div><h2 id="ankidroid">AnkiDroid</h2>
+<p>As a last step we copy the root-CA&rsquo;s certificate (not the key! also not the server certificate!) to an Android smartphone running AnkiDroid, so that the server&rsquo;s certificate can be trusted. To do that, we copy the certificate from the folder obtained by <code>mkcert -CAROOT</code> to the phone and install it via the settings and secrets menu. As a final step, we configure the custom server&rsquo;s address <code>https://mycomputer:27701</code> as AnkiDroid&rsquo;s synchronization server in the advanced settings menu of the app.</p>
+<h2 id="wrapup">Wrapup</h2>
+<p>Getting an anki-sync-server up and running is actually quite simple thanks to its developers. AnkiDroids choice to disallow non-TLS HTTP traffic complicated matters again, especially in a home network scenario. That made it necessary to go all the way with  a reverse proxy, root-CA and certificate installation on the android device.</p>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

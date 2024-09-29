@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tags on bg</title>
+    <link>https://bgraf.github.io/tags/</link>
+    <description>Recent content in Tags on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Fri, 27 Sep 2024 22:13:00 +0200</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Mathopt</title>
+      <link>https://bgraf.github.io/tags/mathopt/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/mathopt/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Optimization</title>
+      <link>https://bgraf.github.io/tags/optimization/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/optimization/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Ortools</title>
+      <link>https://bgraf.github.io/tags/ortools/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/ortools/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Python</title>
+      <link>https://bgraf.github.io/tags/python/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/python/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>TSP</title>
+      <link>https://bgraf.github.io/tags/tsp/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/tsp/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Anki</title>
+      <link>https://bgraf.github.io/tags/anki/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/anki/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Anki-Sync-Server</title>
+      <link>https://bgraf.github.io/tags/anki-sync-server/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/anki-sync-server/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>AnkiDroid</title>
+      <link>https://bgraf.github.io/tags/ankidroid/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://bgraf.github.io/tags/ankidroid/</guid>
+      <description></description>
+    </item>
+  </channel>
+</rss>

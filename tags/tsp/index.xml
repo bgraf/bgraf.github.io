@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>TSP on bg</title>
+    <link>https://bgraf.github.io/tags/tsp/</link>
+    <description>Recent content in TSP on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Fri, 27 Sep 2024 22:13:00 +0200</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/tsp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TSP subtour elimination with lazy constraint callbacks in ORTools</title>
+      <link>https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/</link>
+      <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/</guid>
+      <description>Most MIP solver software packages support the concept of callbacks to interact with the solver during the solution process. Callbacks can be used to track the process, terminate early, generate user cuts to tighten the bounds on relaxed problems, take branching decisions and in case of the lazy constraint callback generate constraints on the fly.&#xA;Generating constraints during the solution process makes sense when&#xA;the number of constraints is relatively large (e.</description>
+    </item>
+  </channel>
+</rss>

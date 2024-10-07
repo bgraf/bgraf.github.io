@@ -4,11 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Posts | bg</title>
+  <title>Python | bg</title>
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/fonts.css" />
-  <link rel="alternate" type="application/rss+xml" href="https://bgraf.github.io/posts/index.xml" title="bg">
-
+  
 
   
 
@@ -35,28 +34,54 @@
     </div>
 
   </header>
-
-
-<h1>Posts</h1>
-
+<div class="article-meta">
+<h1><span class="title">Python</span></h1>
 
 
 
-<ul class="pages">
-  
-  
-  
-  <li>
-    <span class="date">2024-09-27</span>
-    <a href="/posts/ortools-lazy-constraint-callbacks-tsp/">TSP subtour elimination with lazy constraint callbacks in ORTools</a>
-  </li>
-  
-  <li>
-    <span class="date">2022-12-14</span>
-    <a href="/posts/setup-anki-sync-server/">Setting up a personal Anki synchronization server</a>
-  </li>
-  
+</div>
+
+
+
+<main>
+<h2 id="plikal-mdash-python-libraries-i-have-known-and-loved">PLIKAL — Python Libraries I Have Known And Loved</h2>
+<ul>
+<li>
+<p><a href="https://pypi.org/project/colorama/">colorama</a></p>
+<p>Simple terminal output coloring.</p>
+</li>
+<li>
+<p><a href="https://pypi.org/project/pyperclip/">pyperclip</a></p>
+<p>Read from and write to the clipboard.</p>
+</li>
+<li>
+<p><a href="https://pypi.org/project/polars/">polars</a></p>
+<p>Dataframes and data wrangling library.</p>
+<p>I prefer it over <code>pandas</code> because:</p>
+<ul>
+<li>Columns are typed</li>
+<li>The syntax is more intuitive and similar to tidyverse libraries (R)</li>
+<li>A lot easier to read</li>
+<li>Seems faster (maybe it is, maybe it isn&rsquo;t)</li>
+<li>Simple in- and output of parquet and excel files</li>
+<li>Excel output comes per default with autofilters</li>
 </ul>
+</li>
+<li>
+<p><a href="https://pypi.org/project/ortools/">ortools</a></p>
+<p>Optimization library for linear and integer programming. Some other heuristics as well.</p>
+<p>Why I like this library:</p>
+<ul>
+<li>Nice interface</li>
+<li>Comes bundled with the SCIP MIP-solver</li>
+<li>Library and API also available in C++ and other languages</li>
+<li>Allows for advanced features like <em>lazy constraint callbacks</em> and <em>user cut callbacks</em>,
+see <a href="https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/">example (1)</a>.</li>
+</ul>
+</li>
+</ul>
+
+</main>
 
   <footer>
   
@@ -64,3 +89,4 @@
   </footer>
   </body>
 </html>
+

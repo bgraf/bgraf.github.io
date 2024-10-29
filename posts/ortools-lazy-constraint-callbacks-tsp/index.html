@@ -103,8 +103,7 @@ take branching decisions and in case of the <em>lazy constraint callback</em> ge
         \text{s.t.} && \textcolor{blue}{x} &\textcolor{blue}{\geq} \textcolor{blue}{10} \\
         && x &\in \mathbb{N}
     \end{align*}
-\]
-<p>
+\]<p>
 The constraint in blue will be added in a lazy constraint callback.</p>
 
 <div class="highlight" style="position: relative;">
@@ -171,8 +170,7 @@ also considers the same problem, but with a local search method.</p>
         && \sum_{e = \{u,v\} \in E \colon u \in U,\ v \not\in U}x_e &\geq 2 && \forall U \subset V \\
         && x_e &\in \{0, 1\}
     \end{align}
-\]
-<p>
+\]<p>
 Constraints (3) ensure that any proper node subset \(U \subset V\) is connected to the remaining nodes \(U' = V\setminus U\) via at least two edges as demonstrated in the figure below.
 This differs from the subtour elimination constraint shown on Wikipedia but has the same effect.</p>
 <figure><img src="/posts/ortools-lazy-constraint-callbacks-tsp/cut.png"

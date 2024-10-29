@@ -7,14 +7,21 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Fri, 27 Sep 2024 22:13:00 +0200</lastBuildDate>
+    <lastBuildDate>Fri, 04 Oct 2024 23:55:40 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/tags/tsp/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TSP subtour elimination II</title>
+      <link>https://bgraf.github.io/posts/tsp-user-cuts/</link>
+      <pubDate>Fri, 04 Oct 2024 23:55:40 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/tsp-user-cuts/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/&#34;&gt;In an earlier post&lt;/a&gt; I demoed the lazy constraint callback of ORTools&amp;rsquo; &lt;code&gt;math_opt&lt;/code&gt; module&#xA;to generate subtour elimination constraints for the TSP.&#xA;Coded in Python the process to solve a single instance took around 65 seconds. I wondered what the runtime of the same algorithm and instance would be if instead of python,&#xA;we&amp;rsquo;d use the C++ ORTools library. In the next few paragraphs we will reduce the runtime from 65 to 12 seconds by using&lt;/p&gt;</description>
+    </item>
     <item>
       <title>TSP subtour elimination with lazy constraint callbacks in ORTools</title>
       <link>https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/</link>
       <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
       <guid>https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/</guid>
-      <description>Most MIP solver software packages support the concept of callbacks to interact with the solver during the solution process. Callbacks can be used to track the process, terminate early, generate user cuts to tighten the bounds on relaxed problems, take branching decisions and in case of the lazy constraint callback generate constraints on the fly.&#xA;Generating constraints during the solution process makes sense when&#xA;the number of constraints is relatively large (e.</description>
+      <description>&lt;p&gt;Most MIP solver software packages support the concept of &lt;em&gt;callbacks&lt;/em&gt; to interact with the solver during the solution process.&#xA;Callbacks can be used to track the process, terminate early, generate user cuts to tighten the bounds on relaxed problems,&#xA;take branching decisions and in case of the &lt;em&gt;lazy constraint callback&lt;/em&gt; generate constraints on the fly.&lt;/p&gt;&#xA;&lt;p&gt;Generating constraints during the solution process makes sense when&lt;/p&gt;&#xA;&lt;ol&gt;&#xA;&lt;li&gt;the number of constraints is relatively large (e.g. exponentially) so adding them all upfront would take too much time and&lt;/li&gt;&#xA;&lt;li&gt;the number of constraints required to reach an integer optimal solution for a given instance is relatively small compared to the total number of constraints.&lt;/li&gt;&#xA;&lt;/ol&gt;&#xA;&lt;p&gt;So, the solution process is:&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

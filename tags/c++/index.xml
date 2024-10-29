@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>C&#43;&#43; on bg</title>
+    <link>https://bgraf.github.io/tags/c&#43;&#43;/</link>
+    <description>Recent content in C&#43;&#43; on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Fri, 04 Oct 2024 23:55:40 +0200</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/c++/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TSP subtour elimination II</title>
+      <link>https://bgraf.github.io/posts/tsp-user-cuts/</link>
+      <pubDate>Fri, 04 Oct 2024 23:55:40 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/tsp-user-cuts/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/&#34;&gt;In an earlier post&lt;/a&gt; I demoed the lazy constraint callback of ORTools&amp;rsquo; &lt;code&gt;math_opt&lt;/code&gt; module&#xA;to generate subtour elimination constraints for the TSP.&#xA;Coded in Python the process to solve a single instance took around 65 seconds. I wondered what the runtime of the same algorithm and instance would be if instead of python,&#xA;we&amp;rsquo;d use the C++ ORTools library. In the next few paragraphs we will reduce the runtime from 65 to 12 seconds by using&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

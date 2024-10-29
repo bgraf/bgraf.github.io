@@ -7,27 +7,41 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Fri, 27 Sep 2024 22:13:00 +0200</lastBuildDate>
+    <lastBuildDate>Tue, 29 Oct 2024 00:00:00 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>C&#43;&#43;</title>
+      <link>https://bgraf.github.io/tags/c&#43;&#43;/</link>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/c&#43;&#43;/</guid>
+      <description></description>
+    </item>
     <item>
       <title>Mathopt</title>
       <link>https://bgraf.github.io/tags/mathopt/</link>
-      <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
       <guid>https://bgraf.github.io/tags/mathopt/</guid>
       <description></description>
     </item>
     <item>
       <title>Optimization</title>
       <link>https://bgraf.github.io/tags/optimization/</link>
-      <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
       <guid>https://bgraf.github.io/tags/optimization/</guid>
       <description></description>
     </item>
     <item>
       <title>Ortools</title>
       <link>https://bgraf.github.io/tags/ortools/</link>
-      <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
       <guid>https://bgraf.github.io/tags/ortools/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>TSP</title>
+      <link>https://bgraf.github.io/tags/tsp/</link>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/tsp/</guid>
       <description></description>
     </item>
     <item>
@@ -35,13 +49,6 @@
       <link>https://bgraf.github.io/tags/python/</link>
       <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
       <guid>https://bgraf.github.io/tags/python/</guid>
-      <description></description>
-    </item>
-    <item>
-      <title>TSP</title>
-      <link>https://bgraf.github.io/tags/tsp/</link>
-      <pubDate>Fri, 27 Sep 2024 22:13:00 +0200</pubDate>
-      <guid>https://bgraf.github.io/tags/tsp/</guid>
       <description></description>
     </item>
     <item>

@@ -7,8 +7,15 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Fri, 27 Sep 2024 22:13:00 +0200</lastBuildDate>
+    <lastBuildDate>Tue, 29 Oct 2024 00:00:00 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/tags/mathopt/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TSP subtour elimination II - User Cut Callbacks</title>
+      <link>https://bgraf.github.io/posts/tsp-user-cuts/</link>
+      <pubDate>Tue, 29 Oct 2024 00:00:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/tsp-user-cuts/</guid>
+      <description>&lt;p&gt;&lt;a href=&#34;https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/&#34;&gt;In an earlier post&lt;/a&gt; I demoed the lazy constraint callback of ORTools&amp;rsquo; &lt;code&gt;math_opt&lt;/code&gt; module&#xA;to generate subtour elimination constraints for the TSP.&#xA;Coded in Python the process to solve a single instance took around 65 seconds. I wondered what the runtime of the same algorithm and instance would be if instead of python,&#xA;we&amp;rsquo;d use the C++ ORTools library. In the next few paragraphs we will reduce the runtime from 65 to 12 seconds by using&lt;/p&gt;</description>
+    </item>
     <item>
       <title>TSP subtour elimination with lazy constraint callbacks in ORTools</title>
       <link>https://bgraf.github.io/posts/ortools-lazy-constraint-callbacks-tsp/</link>

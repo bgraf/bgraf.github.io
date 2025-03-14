@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Programming on bg</title>
+    <link>https://bgraf.github.io/tags/programming/</link>
+    <description>Recent content in Programming on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Fri, 14 Mar 2025 18:35:00 +0100</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/programming/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Joy of Python with Type Hints</title>
+      <link>https://bgraf.github.io/posts/joy-of-typing-python/</link>
+      <pubDate>Fri, 14 Mar 2025 18:35:00 +0100</pubDate>
+      <guid>https://bgraf.github.io/posts/joy-of-typing-python/</guid>
+      <description>&lt;p&gt;In 2011–2017 I used Python regularly but not daily to drive small tasks and orchestration of larger programs.&#xA;Moving around files, creating directories, extracting data from HTML pages and so on.&#xA;In my case regular use was spread out wide enough that I always needed to lookup the docs again.&#xA;Thus Python seemed a bit like a necessary evil, I did not like working with it, but alternatives like bash or perl were even worse.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

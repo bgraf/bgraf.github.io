@@ -14,7 +14,7 @@
       <link>https://bgraf.github.io/posts/setup-anki-sync-server/</link>
       <pubDate>Wed, 14 Dec 2022 14:50:04 +0100</pubDate>
       <guid>https://bgraf.github.io/posts/setup-anki-sync-server/</guid>
-      <description>&lt;blockquote class=&#34;warning&#34;&gt;&lt;p&gt;2024-09-22: The setup described below is &lt;strong&gt;outdated&lt;/strong&gt;.&lt;/p&gt;&#xA;&lt;/blockquote&gt;&#xA;&lt;p&gt;The spaced-repetition software Anki is supported by a centralized service allowing users to synchronize their flashcards between different devices and apps (desktops, mobile phones, etc.). The default service is called Ankiweb and free to use, but lacks encryption and should be used with care when cards contain confidential data. In this article I describe how to setup your personal synchronization server and show why it&amp;rsquo;s more complex than it would need to be.&lt;/p&gt;</description>
+      <description>&lt;blockquote class=&#34;warning&#34;&gt;&lt;p&gt;2024-09-22: The setup described below is &lt;strong&gt;outdated&lt;/strong&gt;.&lt;/p&gt;&lt;/blockquote&gt;&#xA;&lt;p&gt;The spaced-repetition software Anki is supported by a centralized service allowing users to synchronize their flashcards between different devices and apps (desktops, mobile phones, etc.). The default service is called Ankiweb and free to use, but lacks encryption and should be used with care when cards contain confidential data. In this article I describe how to setup your personal synchronization server and show why it&amp;rsquo;s more complex than it would need to be.&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>

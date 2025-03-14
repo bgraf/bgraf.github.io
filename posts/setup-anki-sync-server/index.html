@@ -70,8 +70,7 @@
 
 
 <main>
-<blockquote class="warning"><p>2024-09-22: The setup described below is <strong>outdated</strong>.</p>
-</blockquote>
+<blockquote class="warning"><p>2024-09-22: The setup described below is <strong>outdated</strong>.</p></blockquote>
 <p>The spaced-repetition software Anki is supported by a centralized service allowing users to synchronize their flashcards between different devices and apps (desktops, mobile phones, etc.). The default service is called Ankiweb and free to use, but lacks encryption and should be used with care when cards contain confidential data. In this article I describe how to setup your personal synchronization server and show why it&rsquo;s more complex than it would need to be.</p>
 <p>Other synchronization servers can be used instead of Ankiweb. Multiple implementations of the server software exist, e.g. <a href="https://github.com/ankicommunity/anki-sync-server">anki-sync-server</a> written in Python or <a href="https://github.com/ankicommunity/anki-sync-server-rs">anki-sync-server-rs</a> written in Rust. Synchronizing to a custom synchronization server is configurable in AnkiDroid, but the desktop version requires the additional plugin <a href="https://ankiweb.net/shared/info/358444159">custom sync server redirector</a>.</p>
 <h2 id="complication">Complication</h2>
@@ -85,7 +84,7 @@
 </ul>
 <h2 id="server">Server</h2>
 <p>We will create a Docker container hosting the anki-sync-server for flashcard synchronization and an NGINX reverse proxy for TLS support.</p>
-<figure><img src="./arch.png">
+<figure><img src="/posts/setup-anki-sync-server/arch.png">
 </figure>
 
 <p>For data persistence we will mount a local folder <code>data/</code> into the container at <code>/opt/ankisync</code>. This <code>data/</code> folder will also contain the server certificate and key. We will create the certificates and keys below, after the container is setup.</p>

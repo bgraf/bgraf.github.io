@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gomory-Hu Trees and Gusfield&#39;s algorithm | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },   
+                { left: '$$', right: '$$', display: true },     
+                { left: '\\(', right: '\\)', display: false },  
+            ],
+            throwOnError: false
+        });
+    });
+</script>
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:grid; grid-template-columns: 1fr 2fr 1fr;">
+      <div></div>
+      <div style="text-align:center;">
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div>
+        <nav style="display:flex; flex-direction: column; align-items: flex-end; gap:5px;">
+            <a title="Content tree" href="/links"><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 7.26214 17.9831 7.5207 17.9504 7.77457C19.77 8.80413 21 10.7575 21 13C21 16.3137 18.3137 19 15 19H13V22H11V19H8.5C5.46243 19 3 16.5376 3 13.5C3 11.2863 4.30712 9.37966 6.19098 8.50704C6.06635 8.02551 6 7.52039 6 7ZM7.00964 10.3319C5.82176 10.8918 5 12.1008 5 13.5C5 15.433 6.567 17 8.5 17H15C17.2091 17 19 15.2091 19 13C19 11.3056 17.9461 9.85488 16.4544 9.27234L15.6129 8.94372C15.7907 8.30337 16 7.67183 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 8.30783 8.6266 9.46903 9.60019 10.2005L8.39884 11.7995C7.85767 11.3929 7.38716 10.8963 7.00964 10.3319Z"></path></svg></a>
+            <a title="About" href=""><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 22H18V20C18 18.3431 16.6569 17 15 17H9C7.34315 17 6 18.3431 6 20V22H4V20C4 17.2386 6.23858 15 9 15H15C17.7614 15 20 17.2386 20 20V22ZM12 13C8.68629 13 6 10.3137 6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 10.3137 15.3137 13 12 13ZM12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"></path></svg></a>
+            <a style="background-color: #ffea79;" title="RSS feed" href="/index.xml"><svg style="width:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z"></path></svg></a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Gomory-Hu Trees and Gusfield&rsquo;s algorithm</span></h1>
+
+<h2 class="date">2025-03-23</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/graphs">graphs</a>
+    
+        <a href="/tags/algorithms">algorithms</a>
+    
+    </div>
+
+</div>
+
+
+
+<main>
+<p>When I need to calculate all minimum \(s\)-\(t\) cuts in an undirected (and possibly weighted) graph
+(<a href="https://bgraf.github.io/posts/tsp-user-cuts/">for example to implement TSP cuts</a>) I used
+<a href="https://en.wikipedia.org/wiki/Gomory%E2%80%93Hu_tree">Gomory-Hu Trees</a>.
+I never looked at the actual algorithm, so here are some properties of Gomory-Hu trees and the commented algorithm
+in python for future reference.</p>
+<h2 id="what-is-a-gomory-hu-tree">What is a Gomory-Hu tree?</h2>
+<p>Given an undirected connected graph \(G\) with edge capacities, a Gomory-Hu tree \(T\)</p>
+<ul>
+<li>Has the same vertex set as \(G\).</li>
+<li>Has weighted edges which are unrelated to the edges of \(G\).</li>
+<li>Isn&rsquo;t unique: there could be multiple distinct trees to represent the same information.
+Multiple distinct trees indicate multiple distinct minimum cuts.</li>
+<li>Isn&rsquo;t rooted or can be rooted at any node.</li>
+<li>The tree represents all minimum \(s\)-\(t\) cuts of \(G\).
+For any two nodes \(s, t \in V(G)\) let \(e\) be the minimum weight edge on the unique path between \(s\) and \(t\) in \(T\).
+Then the weight of \(e\) corresponds to the maximum flow between \(s\) and \(t\) and the two connected components of \(T\) generated by
+removing edge \(e\) correspond the minimum cut, i.e., the source and the sink side node sets.</li>
+</ul>
+<p><strong>Illustration</strong>:
+The tree is like a set of islands connected by bridges.
+The smallest bridge on any path determines the maximum size of a vehicle to make the trip.
+<figure><img src="/posts/gomory-hu/bridges.png">
+</figure>
+</p>
+<h2 id="gusfields-algorithm-to-derive-a-gomory-hu-tree">Gusfield&rsquo;s algorithm to derive a Gomory-Hu tree</h2>
+<p>All relevant algorithms to derive a Gomory-Hu tree use \(|V(G) - 1|\) minimum cut calculations.
+The original algorithm by Gomory and Hu works by contracting node subsets which reduces the size of the
+graphs for the minimum cut calculations but incurs additional bookkeeping overhead for the contractions.
+In contrast, Gusfield&rsquo;s algorithm works without contractions and is therefore easier to implement.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <a class="highlight-url" href="https://github.com/bgraf/code-examples/blob/main/min-cut/gomory-hu.py">ext</a>
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">gusfields_cut_tree</span><span class="p">(</span><span class="n">G</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># == Initialization ==</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">G</span><span class="o">.</span><span class="n">nodes</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># Choose an arbitary root node</span>
+</span></span><span class="line"><span class="cl">    <span class="n">root</span> <span class="o">=</span> <span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># pred[n] is the parent of n in T.</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># The root doesn&#39;t have a parent, all other nodes are children of root.</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pred</span> <span class="o">=</span> <span class="p">[</span><span class="n">root</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">pred</span><span class="p">[</span><span class="n">root</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># weight[n] is the weight of edge { n, parent(n) } in T.</span>
+</span></span><span class="line"><span class="cl">    <span class="c1"># The root doesn&#39;t have a weight, all other nodes have zero weight initially.</span>
+</span></span><span class="line"><span class="cl">    <span class="n">weight</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">weight</span><span class="p">[</span><span class="n">root</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="c1"># == Calculation ==</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="n">root</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Minimum cut between n and parent(n)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">pn</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">n</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cut_value</span><span class="p">,</span> <span class="p">(</span><span class="n">source_side</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">minimum_cut</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">pn</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">weight</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">cut_value</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># All siblings of n on n&#39;s side of the cut will become n&#39;s children.</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># The remaining siblings stay with parent(n).</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">nn</span> <span class="ow">in</span> <span class="n">source_side</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span> <span class="n">nn</span> <span class="o">!=</span> <span class="n">n</span> <span class="ow">and</span> <span class="n">pred</span><span class="p">[</span><span class="n">nn</span><span class="p">]</span> <span class="o">==</span> <span class="n">pn</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                <span class="n">pred</span><span class="p">[</span><span class="n">nn</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># If n&#39;s grandparent is actually on n&#39;s side of the cut, n and its parent</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># swap places.        </span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">pred</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pred</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="ow">in</span> <span class="n">source_side</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="n">pred</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">pred</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">            <span class="n">pred</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="o">=</span> <span class="n">n</span>
+</span></span><span class="line"><span class="cl">            <span class="n">weight</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">weight</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">            <span class="n">weight</span><span class="p">[</span><span class="n">pn</span><span class="p">]</span> <span class="o">=</span> <span class="n">cut_value</span>
+</span></span><span class="line"><span class="cl">            
+</span></span><span class="line"><span class="cl">    <span class="c1"># == Result ==</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">T</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>  
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pred</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">p</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="k">continue</span>
+</span></span><span class="line"><span class="cl">        <span class="n">T</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">T</span></span></span></code></pre>
+</div>
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

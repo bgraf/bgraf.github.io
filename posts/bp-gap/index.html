@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Example: Branch &amp; Price for the GAP with SCIP | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },   
+                { left: '$$', right: '$$', display: true },     
+                { left: '\\(', right: '\\)', display: false },  
+            ],
+            throwOnError: false
+        });
+    });
+</script>
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:grid; grid-template-columns: 1fr 2fr 1fr;">
+      <div></div>
+      <div style="text-align:center;">
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div>
+        <nav style="display:flex; flex-direction: column; align-items: flex-end; gap:5px;">
+            <a title="Content tree" href="/links"><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 7.26214 17.9831 7.5207 17.9504 7.77457C19.77 8.80413 21 10.7575 21 13C21 16.3137 18.3137 19 15 19H13V22H11V19H8.5C5.46243 19 3 16.5376 3 13.5C3 11.2863 4.30712 9.37966 6.19098 8.50704C6.06635 8.02551 6 7.52039 6 7ZM7.00964 10.3319C5.82176 10.8918 5 12.1008 5 13.5C5 15.433 6.567 17 8.5 17H15C17.2091 17 19 15.2091 19 13C19 11.3056 17.9461 9.85488 16.4544 9.27234L15.6129 8.94372C15.7907 8.30337 16 7.67183 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 8.30783 8.6266 9.46903 9.60019 10.2005L8.39884 11.7995C7.85767 11.3929 7.38716 10.8963 7.00964 10.3319Z"></path></svg></a>
+            <a title="About" href=""><svg style="width:20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 22H18V20C18 18.3431 16.6569 17 15 17H9C7.34315 17 6 18.3431 6 20V22H4V20C4 17.2386 6.23858 15 9 15H15C17.7614 15 20 17.2386 20 20V22ZM12 13C8.68629 13 6 10.3137 6 7C6 3.68629 8.68629 1 12 1C15.3137 1 18 3.68629 18 7C18 10.3137 15.3137 13 12 13ZM12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"></path></svg></a>
+            <a style="background-color: #ffea79;" title="RSS feed" href="/index.xml"><svg style="width:18px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 17C5.20914 17 7 18.7909 7 21H3V17ZM3 10C9.07513 10 14 14.9249 14 21H12C12 16.0294 7.97056 12 3 12V10ZM3 3C12.9411 3 21 11.0589 21 21H19C19 12.1634 11.8366 5 3 5V3Z"></path></svg></a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Example: Branch &amp; Price for the GAP with SCIP</span></h1>
+
+<h2 class="date">2025-04-06</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/linear-programming">linear programming</a>
+    
+        <a href="/tags/scip">SCIP</a>
+    
+        <a href="/tags/column-generation">column generation</a>
+    
+        <a href="/tags/generalized-assignment-problem">generalized assignment problem</a>
+    
+        <a href="/tags/algorithms">algorithms</a>
+    
+    </div>
+
+</div>
+
+
+
+<main>
+<p>Recently I&rsquo;ve been reading <a href="https://optimizingwithcolumngeneration.github.io/"><em>Optimizing with Column Generation</em> (2024)</a> by Uchoa, Pessoa &amp; Moreno, a free (and work in progress) book on
+<a href="https://en.wikipedia.org/wiki/Column_generation"><em>column generation</em> (CG)</a>.
+In Chapter 4.4.1. they discuss the <a href="https://en.wikipedia.org/wiki/Generalized_assignment_problem"><em>Generalized Assignment Problem</em> (GAP)</a> and provide an example.
+We will implement this example using the <a href="https://pyscipopt.readthedocs.io/en/latest/"><em>pyscipopt</em></a> library.
+<em>pyscipopt</em> is a thin wrapper around <a href="https://www.scipopt.org/">SCIP</a>, a solver library/executable for constraint integer programming<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>.</p>
+<h2 id="the-generalized-assignment-problem-gap">The Generalized Assignment Problem (GAP)</h2>
+<p>In short the problem is as follows:</p>
+<p>Let \(J = \{1,\ldots, n\}\) be a set of jobs and \(K = \{1,\ldots,m\}\) a set of machines with
+maximum capacity \(W_k\) for a machine \(k \in K\).
+Running job \(j \in J\) on machine \(k \in K\) consumes \(l^k_j \in \mathbb{N_+}\) capacity
+and incurs cost \(c^k_j \in \mathbb{N_+}\).
+Find a minimum cost assignment \(s: J \rightarrow K\) such that no machine
+capacity is exceeded.</p>
+<h3 id="cg-formulation">CG Formulation</h3>
+<p>The basic idea is to skip everything related to the machines&rsquo; maximum capacities and instead assume
+that we know all possible and feasible combinations of jobs for each machine on its own.
+For all of these configurations we can calculate the cost and we know the set of jobs
+that are performed (<em>covered</em>) by that configuration.
+If we know all configurations, everything left to do is pick one or more configurations such that
+each job is covered by one configuration (constraints (2)), there is at most one configuration per available machine (constraints (3))
+and the sum of costs of the selected configurations is minimum (objective (1)).</p>
+\[
+    \begin{align}
+    && \min \sum_{q \in Q} c_q \lambda_q \\
+    \text{s.t.} && \sum_{q \in Q} [j \in J_q]\lambda_q &\geq 1 && \forall j \in J \\
+    && \sum_{q \in Q} [k = k_q]\lambda_k &\leq 1 && \forall k \in K \\
+    && \lambda_q &\in \{0, 1\} && \forall q \in Q
+    \end{align}
+\]<p>The set of columns is \(Q\).
+In the CG model every configuration corresponds to a column \(q \in Q\) and therefore to a
+single variable \(\lambda_q\) with cost \(c_q\), machine \(k_q\) and set of covered
+jobs \(J_q \subseteq J\).</p>
+<blockquote class="warning"><p>Note that \(W_k\) are not part of the model.
+They will come into focus again when we start generating columns.
+For now all columns correspond to feasible configurations, therefore the machines&rsquo; capacities are always
+respected.</p></blockquote>
+<p><strong>Example</strong>:</p>
+<figure><img src="/posts/bp-gap/opt.png" width="100%">
+</figure>
+
+<p>For an instance with four jobs and two machines the figure shows two columns covering
+all jobs. One column for each machine.</p>
+<h2 id="algorithm-overview">Algorithm Overview</h2>
+<p>So far we assumed to know all columns. If that&rsquo;s the case we just solve the presented integer program,
+derive the mapping from jobs to machines from the selected columns and we&rsquo;re done.
+For small instances full enumeration of all possible columns may be an option, but at some
+point there will be too many columns to generate and the ratio of possible columns to
+actual columns in an optimal solution increases as well.</p>
+<p>So instead of generating all columns up front, we will generate columns as necessary.
+New columns will be generated according the the current LP solutions such that they
+enable improvement of the solution.
+In that way we move towards an optimal solution, hopefully without generating all possible
+columns.</p>
+<figure><img src="/posts/bp-gap/algo.png" width="70%">
+</figure>
+
+<p>The algorithm works as follows:</p>
+<ol>
+<li>
+<p><strong>Initialize</strong><br>
+Setup the integer programming model (1)–(4).
+We will initialize with <em>artificial variables</em>.
+Each artifical variable will cover exactly one job \(J_q = \{j\}\)
+and they are not bound to any machine by ignoring constraint (3).
+Their individual costs must be large enough to ensure that none of them can be part of any final optimal solution.</p>
+</li>
+<li>
+<p><strong>Solve the LP relaxation</strong><br>
+The LP relaxation is solved to optimality. Due to our artifical variables there is always
+a feasible solution.
+From the optimal LP solution we obtain the dual variable values.</p>
+</li>
+<li>
+<p><strong>Pricing</strong><br>
+During pricing we search for columns that can improve the current optimal LP solution.
+If no such column exists we know that the current LP solution is optimal over all possible columns.</p>
+</li>
+<li>
+<p><strong>Branching</strong><br>
+When the optimal LP solution yields an integer solution we have found an optimal solution
+to our original problem.
+Otherwise there must be some fractional variables.
+We select one of these variables and create two branches.
+Afterwards we continue our process in step 2.</p>
+</li>
+<li>
+<p><strong>Derive solution</strong><br>
+After we obtain a final optimal solution we need to check whether one or more <em>artificial variables</em>
+from step (1) are part of the solution. If that&rsquo;s the case, the original problem is <em>infeasible</em>.
+Otherwise we extract the optimal assignment \(s^\star \colon J \rightarrow K\).</p>
+</li>
+</ol>
+<h2 id="notes">Notes</h2>
+<h3 id="generating-columns-pricing">Generating Columns: Pricing</h3>
+<p>During pricing we try to find a column with negative reduced costs such that it can enter the basis.
+To find such a column if it exists we need the optimal dual solution values of the current LP relaxation.</p>
+<p>In addition to the dual values from the constraints (2) and (3) we will also obtain dual values for the branching constraints
+introduced in the next step.
+In our case these branching duals will only influence the objective function of the pricing problem (thus it&rsquo;s called <em>robust branching</em>).</p>
+<blockquote class="info"><p>Let&rsquo;s say we would branch on a single column \(\lambda_q\).
+In the \(\lambda_q \leq 0\) branch we would need to ensure that we do not regenerate column \(q\).
+This would modify the pricing problem, probably making it harder.
+Therefore this branching scheme would be non-robust.</p></blockquote>
+<p>Any single column is valid only for a specific machine, but may cover one or more jobs.
+Therefore we need to solve one pricing subproblem for every machine.
+The dual values for the job constraints (2) will be used in all subproblems, the dual values for the
+machine constraints (3) only for the machine&rsquo;s subproblem.
+Each branching constraints targets a single original variable \(x_{jk} \in \{0, 1\}\) and is therefore only relevant
+for the subproblem of machine \(k\).</p>
+<h4 id="pricing-problem">Pricing Problem</h4>
+<p>For each machine \(k \in K\) we solve a pricing problem with inputs from the original instance and the optimal dual solution values.</p>
+<p>The pricing problem is a <a href="https://en.wikipedia.org/wiki/Knapsack_problem#Definition"><em>binary knapsack problem</em> (0-1 knapsack)</a>.
+The machine with its capacity \(W_k\) corresponds to the knapsack.
+The jobs correspond to the items, because a single job can either be covered by a column once or not at all.
+The load values \(l^k_j\) indicate the weight of the jobs.</p>
+<p>The only part missing is the objective function for the 0-1 knapsack problem.
+We&rsquo;re looking for a column \(q\) with negative reduced cost \(\overline{c_q}\).
+For optimal values of the dual solution for the job constraints \(\pi_j\) and the machine constraint \(\pi_k\) the reduced costs are defined as follows:</p>
+\[
+\begin{align*}
+    \overline{c}_q &= c_q - \pi_k - \sum_{j \in J}[j \in J_q]\pi_j \\
+        &= \sum_{j \in J}[j \in J_q]c^k_j - \pi_k - \sum_{j \in J}[j \in J_q]\pi_j \\
+        &= \textcolor{blue}{\sum_{j \in J}[j \in J_q](c^k_j - \pi_j)} - \pi_k
+\end{align*}
+\]<p>The set \(J_q\) is a result of our pricing problem, therefore we replace
+the terms \([j \in J_q]\) with variables \(\hat{x}_j \in \{0, 1\}\) giving</p>
+\[
+    \overline{c}_q = \textcolor{blue}{\sum_{j \in J}\hat{x}_j(c^k_j - \pi_j)} - \pi_k
+\]<p>For each instance of the pricing problem the dual \(\pi_k\) is a constant in the objective function and can be ignored.
+We only need to consider \(\pi_k\) when we check whether \(\overline{c}_q < 0\).
+When we transform the remaining terms (<em>blue</em>) into a maximization problem we get exactly an objective function
+for the 0-1 knapsack problem</p>
+\[
+    -\overline{c}_q - \pi_k = \textcolor{blue}{\sum_{j \in J}x_j(\pi_j - c^k_j)}
+\]<p>with item values \(v_j = \pi_j - c^k_j\).</p>
+<h4 id="duals-from-branching-constraints">Duals from branching constraints</h4>
+<p>The next section will clarify the branching on original variables \(x_{jk} \in\{0,1\}\).
+For now it&rsquo;s only relevant to note that a branching constraint is always only relevant for a single machine \(k\) and single job \(j\).
+Let&rsquo;s say \(\pi_{jk}\) is the corresponding dual solution value.
+Then \(\pi_{jk}\) is only relevant for the subproblem of machine \(k\).
+In this subproblem it only influences the objective function of the pricing problem, more specifically it influences the
+objective function coefficient for job \(j\):</p>
+\[
+    -\overline{c}_q - \pi_k = \dots + x_j(\pi_j + \textcolor{red}{\pi_{jk}} - c^k_j) + \dots
+\]<h3 id="branching-on-original-variables">Branching on original variables</h3>
+<p>Branching is performed over original variables \(x_{jk} \in \{0, 1\}\), meaning \(x_{jk} = 1\) if job \(j\) is performed on machine \(k\), otherwise it&rsquo;s \(0\).
+On each branching step we select a single fractional original variable and introduce two branches:</p>
+<ol>
+<li>Job \(j\) must not be performed on machine \(k\): \(x_{jk} \leq 0\)</li>
+<li>Job \(j\) must be performed on machine \(k\): \(x_{jk} \geq 1\)</li>
+</ol>
+<p>These translate to constraints over columns by replacing the original variable with the sum of columns covering job \(j\) on machine \(k\):</p>
+<ol>
+<li>\(\sum_{q\in Q}{[j \in J_q][k = k_q]\lambda_q} \leq 0\)</li>
+<li>\(\sum_{q\in Q}{[j \in J_q][k = k_q]\lambda_q} \geq 1\)</li>
+</ol>
+<h4 id="implementation">Implementation</h4>
+<p>Two properties need to be maintained by the implementation:</p>
+<ol>
+<li>Branching contraints must only be valid for the corresponding new branching node and its children. We ensure that by using <code>local=True</code> during node creation.</li>
+<li>Both new branching nodes must be LP feasible for the columns known during branching. For the lower branch we do not need to do anything. For the upper branch we include artificial
+variables in the branching constraint, because there may be no LP feasible solution where the job of our original fractional variable is performed in full on the associated machine.</li>
+</ol>
+
+<div class="highlight" style="position: relative;">
+    
+    <a class="highlight-url" href="https://github.com/bgraf/code-examples/blob/a311f305a868da984468c2ba67d28b87193da59a/branch_price_gap/solve_gap.py#L205">ext</a>
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">GapBranching</span><span class="p">(</span><span class="n">Branchrule</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">s</span><span class="p">:</span> <span class="n">State</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">branchexeclp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allowaddcons</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">print</span><span class="p">(</span><span class="s2">&#34;=== Branching ===&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">node_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">getCurrentNode</span><span class="p">()</span><span class="o">.</span><span class="n">getNumber</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">def</span> <span class="nf">make_branching_decisions</span><span class="p">(</span><span class="n">bd</span><span class="p">:</span> <span class="n">BranchingDecision</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="n">parent_decisions</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">branches</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="p">[]))</span>
+</span></span><span class="line"><span class="cl">            <span class="n">parent_decisions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bd</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="n">parent_decisions</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">original</span><span class="p">,</span> <span class="n">contains_artificial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">original_solution</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">contains_artificial</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># If the current optimal LP solution contains one or more artificial variables</span>
+</span></span><span class="line"><span class="cl">            <span class="c1"># then the whole subtree is infeasible w.r.t. the original problem.</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="p">{</span><span class="s2">&#34;result&#34;</span><span class="p">:</span> <span class="n">SCIP_RESULT</span><span class="o">.</span><span class="n">INFEASIBLE</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">machines</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">problem</span><span class="o">.</span><span class="n">jobs</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">                <span class="n">v</span> <span class="o">=</span> <span class="n">original</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">                <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mf">0.01</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">                    <span class="k">continue</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                <span class="n">expr</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                    <span class="n">col</span><span class="o">.</span><span class="n">var</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">machine</span> <span class="o">==</span> <span class="n">k</span> <span class="ow">and</span> <span class="n">col</span><span class="o">.</span><span class="n">js</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="n">artificial</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                    <span class="n">col</span><span class="o">.</span><span class="n">var</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">col</span><span class="o">.</span><span class="n">machine</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">col</span><span class="o">.</span><span class="n">js</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                <span class="c1"># It&#39;s import to set `local=True`, otherwise SCIP will behave really strange and</span>
+</span></span><span class="line"><span class="cl">                <span class="c1"># propagate the constraint to other nodes outside the current subtree.</span>
+</span></span><span class="line"><span class="cl">                <span class="n">child1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">createChild</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="n">cons1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">createConsFromExpr</span><span class="p">(</span>
+</span></span><span class="line hl"><span class="cl">                    <span class="n">expr</span> <span class="o">&lt;=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">local</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addConsNode</span><span class="p">(</span><span class="n">child1</span><span class="p">,</span> <span class="n">cons1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">branches</span><span class="p">[</span><span class="n">child1</span><span class="o">.</span><span class="n">getNumber</span><span class="p">()]</span> <span class="o">=</span> <span class="n">make_branching_decisions</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                    <span class="n">BranchingDecision</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">cons1</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                <span class="c1"># In the upper branch we allow artificial variables to ensure feasibility</span>
+</span></span><span class="line"><span class="cl">                <span class="n">child2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">createChild</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="n">cons2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">createConsFromExpr</span><span class="p">(</span>
+</span></span><span class="line hl"><span class="cl">                    <span class="n">expr</span> <span class="o">+</span> <span class="n">artificial</span> <span class="o">&gt;=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">local</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">modifiable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">addConsNode</span><span class="p">(</span><span class="n">child2</span><span class="p">,</span> <span class="n">cons2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">                <span class="bp">self</span><span class="o">.</span><span class="n">s</span><span class="o">.</span><span class="n">branches</span><span class="p">[</span><span class="n">child2</span><span class="o">.</span><span class="n">getNumber</span><span class="p">()]</span> <span class="o">=</span> <span class="n">make_branching_decisions</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">                    <span class="n">BranchingDecision</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">cons2</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">                <span class="k">return</span> <span class="p">{</span><span class="s2">&#34;result&#34;</span><span class="p">:</span> <span class="n">SCIP_RESULT</span><span class="o">.</span><span class="n">BRANCHED</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="p">{</span><span class="s2">&#34;result&#34;</span><span class="p">:</span> <span class="n">SCIP_RESULT</span><span class="o">.</span><span class="n">DIDNOTFIND</span><span class="p">}</span></span></span></code></pre>
+</div><div class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p>Actually SCIP supports more, for example quadratic programming.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</div>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

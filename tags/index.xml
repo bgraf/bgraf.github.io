@@ -7,13 +7,41 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Sun, 23 Mar 2025 00:00:00 +0100</lastBuildDate>
+    <lastBuildDate>Sun, 06 Apr 2025 22:51:21 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Algorithms</title>
       <link>https://bgraf.github.io/tags/algorithms/</link>
-      <pubDate>Sun, 23 Mar 2025 00:00:00 +0100</pubDate>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
       <guid>https://bgraf.github.io/tags/algorithms/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Column Generation</title>
+      <link>https://bgraf.github.io/tags/column-generation/</link>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/column-generation/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Generalized Assignment Problem</title>
+      <link>https://bgraf.github.io/tags/generalized-assignment-problem/</link>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/generalized-assignment-problem/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>Linear Programming</title>
+      <link>https://bgraf.github.io/tags/linear-programming/</link>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/linear-programming/</guid>
+      <description></description>
+    </item>
+    <item>
+      <title>SCIP</title>
+      <link>https://bgraf.github.io/tags/scip/</link>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
+      <guid>https://bgraf.github.io/tags/scip/</guid>
       <description></description>
     </item>
     <item>

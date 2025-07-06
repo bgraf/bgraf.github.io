@@ -7,8 +7,15 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Sun, 23 Mar 2025 00:00:00 +0100</lastBuildDate>
+    <lastBuildDate>Sun, 06 Apr 2025 22:51:21 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/tags/algorithms/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Example: Branch &amp; Price for the GAP with SCIP</title>
+      <link>https://bgraf.github.io/posts/bp-gap/</link>
+      <pubDate>Sun, 06 Apr 2025 22:51:21 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/bp-gap/</guid>
+      <description>&lt;p&gt;Recently I&amp;rsquo;ve been reading &lt;a href=&#34;https://optimizingwithcolumngeneration.github.io/&#34;&gt;&lt;em&gt;Optimizing with Column Generation&lt;/em&gt; (2024)&lt;/a&gt; by Uchoa, Pessoa &amp;amp; Moreno, a free (and work in progress) book on&#xA;&lt;a href=&#34;https://en.wikipedia.org/wiki/Column_generation&#34;&gt;&lt;em&gt;column generation&lt;/em&gt; (CG)&lt;/a&gt;.&#xA;In Chapter 4.4.1. they discuss the &lt;a href=&#34;https://en.wikipedia.org/wiki/Generalized_assignment_problem&#34;&gt;&lt;em&gt;Generalized Assignment Problem&lt;/em&gt; (GAP)&lt;/a&gt; and provide an example.&#xA;We will implement this example using the &lt;a href=&#34;https://pyscipopt.readthedocs.io/en/latest/&#34;&gt;&lt;em&gt;pyscipopt&lt;/em&gt;&lt;/a&gt; library.&#xA;&lt;em&gt;pyscipopt&lt;/em&gt; is a thin wrapper around &lt;a href=&#34;https://www.scipopt.org/&#34;&gt;SCIP&lt;/a&gt;, a solver library/executable for constraint integer programming&lt;sup id=&#34;fnref:1&#34;&gt;&lt;a href=&#34;#fn:1&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;1&lt;/a&gt;&lt;/sup&gt;.&lt;/p&gt;&#xA;&lt;h2 id=&#34;the-generalized-assignment-problem-gap&#34;&gt;The Generalized Assignment Problem (GAP)&lt;/h2&gt;&#xA;&lt;p&gt;In short the problem is as follows:&lt;/p&gt;&#xA;&lt;p&gt;Let \(J = \{1,\ldots, n\}\) be a set of jobs and \(K = \{1,\ldots,m\}\) a set of machines with&#xA;maximum capacity \(W_k\) for a machine \(k \in K\).&#xA;Running job \(j \in J\) on machine \(k \in K\) consumes \(l^k_j \in \mathbb{N_+}\) capacity&#xA;and incurs cost \(c^k_j \in \mathbb{N_+}\).&#xA;Find a minimum cost assignment \(s: J \rightarrow K\) such that no machine&#xA;capacity is exceeded.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Gomory-Hu Trees and Gusfield&#39;s algorithm</title>
       <link>https://bgraf.github.io/posts/gomory-hu/</link>

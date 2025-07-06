@@ -95,6 +95,8 @@ take branching decisions and in case of the <em>lazy constraint callback</em> ge
 <li>Go back to 2.</li>
 </ol>
 <h2 id="minimal-example">Minimal Example</h2>
+<p>For the first example we choose a trivial model with optimal solution \(x^\star=10\).
+</p>
 \[
     \begin{align*}
         && \min x \\
@@ -159,6 +161,8 @@ These constraints ensure that the resulting tour is actually a single tour throu
 <a href="https://ampl.com/colab/notebooks/travelling-salesman-problem-with-subtour-elimination.html">AMPL</a> documentation.
 The tutorial for the <a href="https://developers.google.com/optimization/routing/tsp#circuit_board">ORTools routing module</a>
 also considers the same problem, but with a local search method.</p>
+<p>So, we focus on a Dantzig-Fulkerson-Johnson style formulation (1)-(4) to showcase the lazy constraint callback:
+</p>
 \[
     \begin{align}
         && \min &\sum_{e \in E}c_ex_e \\

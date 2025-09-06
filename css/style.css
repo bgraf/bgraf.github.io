@@ -3,33 +3,13 @@ body {
   margin: auto;
   padding: 1em;
   line-height: 1.5;
+  background-color: rgb(255, 246, 236);
 }
 
-.list-entry {
-  display:flex;
-  flex-direction: row;
-  column-gap: 50px;
-  margin-bottom: 20px;
+li span.date {
+  display: inline-block;
+  width: 100px;
 }
-
-.list-image {
-  width: 120px;
-  height: 120px;
-  max-height: 150px;
-  background-color:#f2f2f2;
-  border-radius: 10px;
-  padding: 5px;
-}
-
-.list-image img {
-  max-height: 120px;
-  border-radius: 10px;
-}
-
-.list-title {
-  font-size:120%;
-}
-
 
 .list-content a {
   text-decoration: none; 
@@ -37,10 +17,6 @@ body {
 
 /* header and footer areas */
 header nav a {
-  background: #eee;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -57,14 +33,6 @@ header nav a {
 .article-meta,
 .menu a {
   text-decoration: none;
-  background: #eee;
-  padding: 5px;
-}
-
-.menu,
-.article-meta,
-footer {
-  text-align: center;
 }
 
 
@@ -128,18 +96,18 @@ blockquote {
   background: #f9f9f9;
   border-left: 5px solid #ccc;
   padding: 3px 1em 3px;
+  margin-left:0;
+  margin-right: 0;
 }
 
 blockquote.warning {
   background: #ffc8c8;
   border-left: 5px solid #ff4343;
-  padding: 3px 1em 3px;
 }
 
 blockquote.info {
   background: #e5f1ff;
   border-left: 5px solid #758eff;
-  padding: 3px 1em 3px;
 }
 
 table {
@@ -173,7 +141,6 @@ a.footnote-ref::after {
 
 .tags {
   display: flex;
-  justify-content: right;
   gap: 5px;
 }
 
@@ -189,18 +156,21 @@ div.highlight {
   position: relative;
 }
 
+div.highlight pre {
+  padding: 0;
+}
+
 a.highlight-url {
-  background-color: #eee;
   position: absolute;
-  padding: 5px 10px 5px 10px;
+  padding: 2px 5px 2px 5px;
   right: 0px;
-  border-radius: 0 0 0 10px;
   text-decoration: none;
+  border:1px solid black;
 }
 /* Generated using: hugo gen chromastyles --style bw */
 
 /* Background */ .bg { background-color:#fff; }
-/* PreWrapper */ .chroma { background-color:#fff; }
+/* PreWrapper */ .chroma { }
 /* Other */ .chroma .x {  }
 /* Error */ .chroma .err {  }
 /* CodeLine */ .chroma .cl {  }

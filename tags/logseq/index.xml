@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Logseq on bg</title>
+    <link>https://bgraf.github.io/tags/logseq/</link>
+    <description>Recent content in Logseq on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Sun, 07 Sep 2025 20:50:00 +0200</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/logseq/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Typeface Matters</title>
+      <link>https://bgraf.github.io/posts/2025/typeface-matters/</link>
+      <pubDate>Sun, 07 Sep 2025 20:50:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/2025/typeface-matters/</guid>
+      <description>&lt;p&gt;At work and at home I have used &lt;a href=&#34;https://logseq.com/&#34;&gt;logseq&lt;/a&gt; as my personal knowledge management system (PKMS) since some time in 2022.&#xA;Most of the time I just used it to store and browse script-generated documentation, for example of database schemas (SAP etc.).&#xA;Generated documentation pages are usually long lists of short texts, one to three words max.&#xA;A single page for each database table with a list of column names, their data types and short description.&#xA;Thus, my PKMS contained barely any text written in full paragraphs.&#xA;Despite the fact that I like writing and editing longer text, I wouldn&amp;rsquo;t have done that in logseq in the past.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

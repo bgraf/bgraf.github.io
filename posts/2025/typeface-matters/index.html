@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Typeface Matters | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:flex; flex-direction: row; gap:30px">
+      <div>
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div style="align-self:flex-end; margin-bottom: 15px;">
+        <nav style="display:flex; flex-direction: row; align-items: flex-start; gap:10px;">
+            <a title="Pages" href="/links">
+              Pages
+            </a>
+            <a title="Posts" href="/posts/">
+              Posts
+            </a>
+            <a title="RSS feed" href="/index.xml">
+              RSS
+            </a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Typeface Matters</span></h1>
+
+<h2 class="date">2025-09-07</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/logseq">logseq</a>
+    
+    </div>
+
+</div>
+
+
+
+<main>
+<p>At work and at home I have used <a href="https://logseq.com/">logseq</a> as my personal knowledge management system (PKMS) since some time in 2022.
+Most of the time I just used it to store and browse script-generated documentation, for example of database schemas (SAP etc.).
+Generated documentation pages are usually long lists of short texts, one to three words max.
+A single page for each database table with a list of column names, their data types and short description.
+Thus, my PKMS contained barely any text written in full paragraphs.
+Despite the fact that I like writing and editing longer text, I wouldn&rsquo;t have done that in logseq in the past.</p>
+<p>When I wondered &ldquo;why&rdquo;, I had a <em>vague</em> feeling that it may be related to the default typeface in logseq.
+It felt like I could write long text, but when looking up specific information I could not grok the context of a paragraph and even less its contents by skimming the text.
+As looking up information was so tiresome and energy intensive, I gave up on writing it down in the first place.</p>
+<h1 id="switching-to-times-new-roman">Switching to Times New Roman</h1>
+<p>I changed logseq&rsquo;s default sans-serif typeface <em>Inter</em> to the classic serif typeface <em>Times New Roman</em> by adding the following to the file <code>logseq/custom.css</code>:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-css" data-lang="css"><span class="line"><span class="cl"><span class="nt">body</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">font-family</span><span class="p">:</span> <span class="s1">&#39;Times New Roman&#39;</span><span class="p">,</span> <span class="n">Times</span><span class="p">,</span> <span class="kc">serif</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span></span></span></code></pre>
+</div><p>This changes the complete UI, including menus, headings and settings dialog.</p>
+<p><figure><img src="/posts/2025/typeface-matters/logseq_inter.png"
+    alt="Inter" width="100%"><figcaption>
+      <p>Inter</p>
+    </figcaption>
+</figure>
+
+<figure><img src="/posts/2025/typeface-matters/logseq_times.png"
+    alt="Times New Roman" width="100%"><figcaption>
+      <p>Times New Roman</p>
+    </figcaption>
+</figure>
+</p>
+<h1 id="should-it-make-a-difference">Should it make a difference?</h1>
+<blockquote>
+<p>“In fact, the copious evidence that has been reviewed in this monograph leads to the conclusion that there is no difference in the legibility of serif and sans serif typefaces either when reading from paper or when reading from screens.” (Richardson, 2022, p. 119)</p></blockquote>
+<p>The scientific literature is inconclusive.
+For me personally it wasn&rsquo;t related to sans-serif vs. sans, but more specifically about getting rid of the <em>Inter</em> typeface.
+Even switching to <em>Arial</em> would have been an improvement.
+I guess it boils down to personal preference and history.
+Most long-form text I&rsquo;ve written had been typeset in serif typefaces, usually <em>Charter</em>.
+Whether the switch improved legibility or whether I just think it looks better and am thus more motivation to read the text, it doesn&rsquo;t matter as long as it works.</p>
+<h1 id="references">References</h1>
+<ul>
+<li>Richardson, J.T.E., 2022. The Legibility of Serif and Sans Serif Typefaces: Reading from Paper and Reading from Screens, SpringerBriefs in Education. Springer International Publishing, Cham. <a href="https://doi.org/10.1007/978-3-030-90984-0">https://doi.org/10.1007/978-3-030-90984-0</a></li>
+</ul>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

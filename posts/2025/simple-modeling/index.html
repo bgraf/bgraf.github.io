@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simple Modeling of Concurrent Systems | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"
+    integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                { left: '\\[', right: '\\]', display: true },   
+                { left: '$$', right: '$$', display: true },     
+                { left: '\\(', right: '\\)', display: false },  
+            ],
+            throwOnError: false
+        });
+    });
+</script>
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:flex; flex-direction: row; gap:30px">
+      <div>
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div style="align-self:flex-end; margin-bottom: 15px;">
+        <nav style="display:flex; flex-direction: row; align-items: flex-start; gap:10px;">
+            <a title="Pages" href="/links">
+              Pages
+            </a>
+            <a title="Posts" href="/posts/">
+              Posts
+            </a>
+            <a title="RSS feed" href="/index.xml">
+              RSS
+            </a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Simple Modeling of Concurrent Systems</span></h1>
+
+<h2 class="date">2025-10-03</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/python">python</a>
+    
+        <a href="/tags/modeling">modeling</a>
+    
+    </div>
+
+</div>
+
+
+<nav id="TableOfContents">
+  <ol>
+    <li><a href="#example-system">Example System</a></li>
+    <li><a href="#modeling-basics">Modeling Basics</a></li>
+    <li><a href="#informal-modeling-using-tests">Informal Modeling using Tests</a>
+      <ol>
+        <li><a href="#state">State</a></li>
+        <li><a href="#actions">Actions</a></li>
+        <li><a href="#tests">Tests</a></li>
+      </ol>
+    </li>
+    <li><a href="#modeling-in-tla">Modeling in TLA+</a>
+      <ol>
+        <li><a href="#initial-implementation">Initial Implementation</a></li>
+        <li><a href="#fixed-implementation">Fixed Implementation</a></li>
+      </ol>
+    </li>
+    <li><a href="#closing-remarks">Closing Remarks</a></li>
+  </ol>
+</nav>
+
+
+<main>
+<p>In this post I&rsquo;ll model a simple distributed system twice: informally in Python tested by unit testing
+and formally in TLA+ verified by model checking.</p>
+<p>Imagine a decade old system comprised of multiple independent subsystems like an ERP-system and some external services.
+The system has been grown over a long time with changes now and then, but without a single person or team responsible to
+keep a consistent vision. Also, the system is prone to various kinds of concurrency problems because considering
+all of these special cases had been out of scope during development or had been simply overlooked.
+These issues surface rarely enough to not create any immediate incentive to fix them.
+In case an issue comes up, they are mitigated by human intervention.
+Our job is to add new features to this system. In the best case also removing existing issues or
+at least not adding any new ones.</p>
+<p>The main problem here is that we do not understand the system, actually no one does in full.
+Thus, when changing the system we always have a significant risk of introducing unwanted behavior
+because the implications of local changes are not obvious.</p>
+<p>One way forward is building a model of the system.
+Building a model of a system can be</p>
+<ol>
+<li>a way to document the status quo of the system</li>
+<li>a tool to simulate the impact of planned changes</li>
+<li>and when modeling formally, a tool to verify that the system actually does what it should under all scenarios.</li>
+</ol>
+<p>We&rsquo;ll start with some basic terminology that is shared by the Python and TLA+ approaches.
+Then we&rsquo;ll model the system in Python and discover some fault by luckily choosing the right unit tests.
+To conclude we&rsquo;ll model the system formally with TLA+ and use the model checker TLC to check it.</p>
+<h2 id="example-system">Example System</h2>
+<p>The system has two subsystems. The first is the leading <em>local system</em> which is
+used to create orders, manage production and so forth.
+The <em>external service</em> is the second subsystem and run by a transportation service provider.
+Given an estimated production date and other order attributes the external service
+calculates a delivery date at the customer location.
+When orders are created or changed on the local system, an asynchronous request is sent to
+the external service which will respond after an undefined time with
+the promised delivery date.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-" data-lang=""><pre tabindex="0"><code>                                  .-------------------.
+        .--------------. --------&gt;| Queue of Requests |--------&gt; .------------------.
+        | Local System |          &#39;-------------------&#39;          | External Service |
+        &#39;--------------&#39; &lt;--.                                .-- &#39;------------------&#39;
+    Creates and changes     |     .--------------------.     |     Calculates delivery dates
+    orders.                 &#39;-----| Queue of Responses |&lt;----&#39;     for given orders.
+                                  &#39;--------------------&#39;</code></pre></code></pre>
+</div><h2 id="modeling-basics">Modeling Basics</h2>
+<p>We will model the state of the whole system over a sequence of specific actions that map the input state to the possibly modified output state.
+This output state will then become the input state of next action and so on.
+Each action comes with a set of preconditions on the input state which must be satisfied to make the action enabled to be applied.</p>
+<figure><img src="/posts/2025/simple-modeling/tree.png">
+</figure>
+
+<p>The <strong>state</strong> comprises all information of the subsystems which are relevant to our modeling purpose,
+e.g., to verify that the system is behaving correctly.
+We should choose the highest level of abstraction that is sufficient for our modeling purpose.
+That way we prevent unnecessary work on details which won&rsquo;t generate any further insight.
+Two equal states are the same, irregardless of their history.
+That means if history about the evolution of the state is relevant,
+we need to explicitly incorporate it into the state such that two states with
+different history will never be equal and thus never be the same.</p>
+<p>An <strong>action</strong> is any atomic operation that changes the system state.
+Here again atomic must be understood with respect to the modeling purpose.
+We may combine a sequence of operations into a single action if that sequence
+will be always performed without any other action interfering.
+For example, for our modeling it&rsquo;s sufficient to assume that an order in the local system
+is created, filled in and saved in one atomic step.</p>
+<h2 id="informal-modeling-using-tests">Informal Modeling using Tests</h2>
+<p>For the informal modeling we use a programming language and testing framework to implement
+and test the model.
+The implementation needs to comprise the state, all possible actions and some additional code
+to handle preconditions.
+Using this implementation we specify test cases corresponding to selected scenarios we want to test.</p>
+<p>Compared to formal modeling we only test an explicit subset of all the possible scenarios.
+This isn&rsquo;t as safe as exhaustively testing the full model, but it&rsquo;s easier to ignore problems
+we actively chose to ignore.
+Either we do not implement the test cases for these ignored problems at all or we mark the tests
+as <em>skipped</em> (or similar) to document that we know and current don&rsquo;t care about them.</p>
+<h3 id="state">State</h3>
+<p>Orders have a production date and an optional delivery date. The delivery date will be computed by
+our external service and is thus initially empty.
+The delivery date is calculated depending on some other order information that we omit it here.
+An order is scheduled, if a delivery date has been set.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Order</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">production_date</span><span class="p">:</span> <span class="n">date</span>
+</span></span><span class="line"><span class="cl">    <span class="n">delivery_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">is_scheduled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delivery_date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></span></span></code></pre>
+</div><p>The communication between our local system and the external service is modelled by a request and a response object.
+The local system sends a request to the external service, which in turn sends back a response.
+Sending a request and receiving a response are asynchronous, that is, there could be an arbitrary long delay
+before a response is generated.
+The underlying transport layer isn&rsquo;t relevant.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Request</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order_id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">production_date</span><span class="p">:</span> <span class="n">date</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Response</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order_id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line"><span class="cl">    <span class="n">delivery_date</span><span class="p">:</span> <span class="n">date</span></span></span></code></pre>
+</div><p>The state of the system is given by the set of defined orders and their attributes and the
+communication queues between the two subsystems.
+A response in <code>queue_from_external</code> means that the response
+had been generated by the external service, but has not yet been processed by the local system.
+Initially the state is empty with no orders and no pending requests or responses.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">State</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">orders</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Order</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">queue_to_external</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Request</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">queue_from_external</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Response</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></span></span></code></pre>
+</div><h3 id="actions">Actions</h3>
+<p>We define four actions to create and change orders and to process requests at
+the external service and the responses at our local system.
+Each action corresponds to one atomic unit of work that will be processed before or after another action,
+but never at the same time.</p>
+<p>Let&rsquo;s start with some ground work. Exception <code>PreconditionError</code> signals that an action cannot be performed
+due to unmet preconditions.
+Programming errors are emitted using <code>assert</code>, which will raise exceptions <code>AssertionError</code>.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">PreconditionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></span></span></code></pre>
+</div><h4 id="creating-and-changing-orders">Creating and changing orders</h4>
+<p>Every order is created with a unique non-empty ID and some production date.
+A request to the external service is sent off for any new order to get
+an appropriate delivery date.
+Although the request is sent off, it isn&rsquo;t immediately processed</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">create_order</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">production_date</span><span class="p">:</span> <span class="n">date</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">id</span> <span class="o">=</span> <span class="nb">id</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&#34;empty order id is not permitted&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1"> already exists&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span> <span class="o">=</span> <span class="n">Order</span><span class="p">(</span><span class="n">production_date</span><span class="o">=</span><span class="n">production_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">state</span><span class="o">.</span><span class="n">queue_to_external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Request</span><span class="p">(</span><span class="n">order_id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">production_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span></span></span></code></pre>
+</div><p>For order changes all we care about is updating its production date.
+Like for newly created orders, a changed order is sent off to the external service to get a delivery date.
+A possible existing delivery date is reset because it corresponds to the prior production date
+and is invalid for the updated production date.
+Therefore a <em>scheduled</em> order becomes <em>unscheduled</em> by a change.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">change_order</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_production_date</span><span class="p">:</span> <span class="n">date</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1"> does not exist&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">order</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">production_date</span> <span class="o">=</span> <span class="n">new_production_date</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">    <span class="n">state</span><span class="o">.</span><span class="n">queue_to_external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Request</span><span class="p">(</span><span class="n">order_id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">new_production_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">)</span></span></span></code></pre>
+</div><h4 id="processing-requests-and-responses">Processing requests and responses</h4>
+<p>We don&rsquo;t care for the inner workings of the transportation service provider, we could
+not even know if we wanted to. Let&rsquo;s just assume that the delivery date can never be earlier
+than the production date, because shipment can&rsquo;t start prior to production.
+For our case we simply say that delivery happens one week after production.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">external_service_process_request</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">queue_to_external</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="s1">&#39;empty queue&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">req</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">queue_to_external</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">state</span><span class="o">.</span><span class="n">queue_from_external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Response</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_id</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">order_id</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="n">delivery_date</span><span class="o">=</span><span class="n">req</span><span class="o">.</span><span class="n">production_date</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">weeks</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">    <span class="p">))</span></span></span></code></pre>
+</div><p>When processing responses from the external service, we update the order&rsquo;s record
+and set its delivery date.
+Thereby the order will become <em>scheduled</em>.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">process_response</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">queue_from_external</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="s1">&#39;empty queue&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">resp</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">queue_from_external</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">order_id</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">ProgrammerError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order </span><span class="si">{</span><span class="n">resp</span><span class="o">.</span><span class="n">order_id</span><span class="si">}</span><span class="s1"> does not exist&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">delivery_date</span></span></span></code></pre>
+</div><h3 id="tests">Tests</h3>
+<p>We start with basic tests of the <em>local system</em> and then move on to test the
+interaction with the external service.
+There we will discover a concurrency issue and fix it.</p>
+<p>First we ensure that we can create orders and that we cannot create the same
+order twice.
+This isn&rsquo;t so interesting, but will ensure we got the basics correct.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">TestCreateOrder</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">test_creates_order</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_no</span> <span class="o">=</span> <span class="s2">&#34;ord#1&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="n">State</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertIsNotNone</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">test_cannot_create_order_twice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_no</span> <span class="o">=</span> <span class="s2">&#34;ord#1&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="n">State</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">        <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="n">PreconditionError</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">            <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></span></span></code></pre>
+</div><p>Let&rsquo;s test a best case roundtrip for a single order.
+The order is created, then a request is sent to the external service
+and its response is processed in our local system.
+Afterwards our order is scheduled and its delivery date is the same or
+later than the production date.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">TestExternalService</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">test_external_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_no</span> <span class="o">=</span> <span class="s2">&#34;ord#1&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="n">State</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="n">external_service_process_request</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">process_response</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreaterEqual</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">production_date</span><span class="p">)</span></span></span></code></pre>
+</div><h4 id="order-changes">Order changes</h4>
+<p>Next we&rsquo;re testing two possibly scenarios about a single order with a single change,
+delaying its production by one month.
+Changing the order invalidates its scheduled status and the new production date
+needs to be processed by the external service.</p>
+<h5 id="smooth-external-service">Smooth external service</h5>
+<p>The first scenario assumes everything works smoothly.
+The order is created and a delivery date is generated and saved.
+Afterwards the order is changed and a new delivery date is generated and saved.
+The system passes our test.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">TestExternalService</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">test_external_with_order_change</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_no</span> <span class="o">=</span> <span class="s2">&#34;ord#1&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="n">State</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="n">external_service_process_request</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">process_response</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        
+</span></span><span class="line"><span class="cl">        <span class="n">change_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">new_production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Order is unscheduled after change</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">external_service_process_request</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">process_response</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Order is scheduled after processing</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertGreaterEqual</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">production_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># ... other tests ...</span></span></span></code></pre>
+</div><h5 id="slow-external-service">Slow external service</h5>
+<p>The second scenario models a slow external service.
+The order change is processed prior to the response for the initial order.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">TestExternalService</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">test_external_with_order_change_and_delayed_processing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order_no</span> <span class="o">=</span> <span class="s2">&#34;ord#1&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">s</span> <span class="o">=</span> <span class="n">State</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">create_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">        <span class="c1"># No processing happening.. slow external service</span>
+</span></span><span class="line"><span class="cl">        <span class="n">change_order</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">order_no</span><span class="p">,</span> <span class="n">new_production_date</span><span class="o">=</span><span class="n">date</span><span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Order is unscheduled after change</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">external_service_process_request</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">process_response</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1"># Order is scheduled after processing</span>
+</span></span><span class="line"><span class="cl">        <span class="n">order</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">order_no</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_scheduled</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">            <span class="bp">self</span><span class="o">.</span><span class="n">assertGreaterEqual</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">production_date</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1"># ... other tests ...</span></span></span></code></pre>
+</div><p>The second scenario fails!</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ python3 -m unittest
+</span></span><span class="line"><span class="cl">....F
+</span></span><span class="line"><span class="cl"><span class="o">======================================================================</span>
+</span></span><span class="line"><span class="cl">FAIL: test_external_with_order_change_and_delayed_processing ...
+</span></span><span class="line"><span class="cl">----------------------------------------------------------------------
+</span></span><span class="line"><span class="cl">Traceback <span class="o">(</span>most recent call last<span class="o">)</span>:
+</span></span><span class="line"><span class="cl">  File <span class="s2">&#34;/example/simple-modeling/test_model.py&#34;</span>, line <span class="m">79</span>
+</span></span><span class="line"><span class="cl">    self.assertGreaterEqual<span class="o">(</span>order.delivery_date, order.production_date<span class="o">)</span>
+</span></span><span class="line"><span class="cl">    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</span></span><span class="line"><span class="cl">AssertionError: datetime.date<span class="o">(</span>2025, 11, 8<span class="o">)</span> not greater than or equal to datetime.date<span class="o">(</span>2025, 12, 1<span class="o">)</span></span></span></code></pre>
+</div><p>What happened? The local system processed the response for the original order
+after the order change, thereby mixing information from two different versions and thus leading to an overall inconsistent state.
+The error only surfaced because the change delayed the order.
+Had the change moved production to an earlier date, then the error
+would not have been discovered with the current test suite, despite
+being there.</p>
+<h4 id="fixing-the-error-with-versioning">Fixing the error with versioning</h4>
+<p>Let&rsquo;s assume that a changed order is actually a new order.
+Then it&rsquo;s obvious that we cannot process a response for the prior order onto the
+new order.
+But because the name of the order actually stays the same, we need some other attribute to
+distinguish different versions.
+Therefore we introduce a version attribute incremented on each order change.
+The attribute is part of the order, the request and the response:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Order</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">production_date</span><span class="p">:</span> <span class="n">date</span>
+</span></span><span class="line"><span class="cl">    <span class="n">delivery_date</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">date</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line hl"><span class="cl">    <span class="n">version</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">is_scheduled</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delivery_date</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Request</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order_id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line hl"><span class="cl">    <span class="n">version</span><span class="p">:</span> <span class="nb">int</span>
+</span></span><span class="line"><span class="cl">    <span class="n">production_date</span><span class="p">:</span> <span class="n">date</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nd">@dataclass</span>
+</span></span><span class="line"><span class="cl"><span class="k">class</span> <span class="nc">Response</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order_id</span><span class="p">:</span> <span class="nb">str</span>
+</span></span><span class="line hl"><span class="cl">    <span class="n">version</span><span class="p">:</span> <span class="nb">int</span>
+</span></span><span class="line"><span class="cl">    <span class="n">delivery_date</span><span class="p">:</span> <span class="n">date</span></span></span></code></pre>
+</div><p>Changing an order increments the version:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">change_order</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_production_date</span><span class="p">:</span> <span class="n">date</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order </span><span class="si">{</span><span class="nb">id</span><span class="si">}</span><span class="s1"> does not exist&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">order</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">production_date</span> <span class="o">=</span> <span class="n">new_production_date</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span> <span class="o">=</span> <span class="kc">None</span>
+</span></span><span class="line hl"><span class="cl">    <span class="n">order</span><span class="o">.</span><span class="n">version</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">    <span class="n">state</span><span class="o">.</span><span class="n">queue_to_external</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span></span><span class="line"><span class="cl">        <span class="n">Request</span><span class="p">(</span><span class="n">order_id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">order</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">production_date</span><span class="o">=</span><span class="n">new_production_date</span><span class="p">))</span></span></span></code></pre>
+</div><p>Finally, we only process a response if its version matches the current order version
+in the local system. Otherwise the response is discarded.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">process_response</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">queue_from_external</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">PreconditionError</span><span class="p">(</span><span class="s1">&#39;empty queue&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">resp</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">queue_from_external</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">order</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">orders</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">order_id</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="n">order</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">        <span class="k">raise</span> <span class="n">ProgrammerError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;order </span><span class="si">{</span><span class="n">resp</span><span class="o">.</span><span class="n">order_id</span><span class="si">}</span><span class="s1"> does not exist&#39;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line hl"><span class="cl">    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="n">resp</span><span class="o">.</span><span class="n">version</span><span class="p">:</span>
+</span></span><span class="line hl"><span class="cl">        <span class="n">order</span><span class="o">.</span><span class="n">delivery_date</span> <span class="o">=</span> <span class="n">resp</span><span class="o">.</span><span class="n">delivery_date</span></span></span></code></pre>
+</div><p>This way the model passes all tests.</p>
+<h2 id="modeling-in-tla">Modeling in TLA+</h2>
+<h3 id="initial-implementation">Initial Implementation</h3>
+<p>We first model the initial defective implementation with TLA+.
+The specification is similar to the Python model with the exception
+that dates are modelled by integers and the date <code>0</code> corresponds to
+an unset date (<code>NULL</code> / <code>None</code>).</p>
+<p>The specification of the faulty implementation already contains a <code>version</code> field for each order,
+which is used to limit the number of order changes that the model checker needs to check.
+Thus, the field is not really part of the implementation.</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">---------------------------- MODULE model_err ----------------------------
+</span></span><span class="line"><span class="cl">EXTENDS Naturals, Sequences, FiniteSets
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CONSTANTS
+</span></span><span class="line"><span class="cl">    ORDERS
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Variables for the local system and the two queues between the subsystems. *)
+</span></span><span class="line"><span class="cl">VARIABLES
+</span></span><span class="line"><span class="cl">    localOrders,
+</span></span><span class="line"><span class="cl">    queueToService,
+</span></span><span class="line"><span class="cl">    queueToLocal
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">vars == &lt;&lt; localOrders, queueToService, queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Dates == 1..3
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Initially the queues are empty and no order has been created yet *)
+</span></span><span class="line"><span class="cl">Init == 
+</span></span><span class="line"><span class="cl">  /\ localOrders = [ o \in ORDERS |-&gt; 
+</span></span><span class="line"><span class="cl">      [
+</span></span><span class="line"><span class="cl">        version         |-&gt; 0,
+</span></span><span class="line"><span class="cl">        productionDate  |-&gt; 0,
+</span></span><span class="line"><span class="cl">        deliveryDate    |-&gt; 0
+</span></span><span class="line"><span class="cl">      ]
+</span></span><span class="line"><span class="cl">    ]
+</span></span><span class="line"><span class="cl">  /\ queueToService = &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">  /\ queueToLocal = &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Predicates *)
+</span></span><span class="line"><span class="cl">IsCreatedOrder(o) == localOrders[o].version &gt; 0
+</span></span><span class="line"><span class="cl">IsScheduledOrder(o) == localOrders[o].deliveryDate &gt; 0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Adds request for order [o] on production date [d] to the queue towards 
+</span></span><span class="line"><span class="cl">   the external service *)
+</span></span><span class="line"><span class="cl">Request(o, d) == 
+</span></span><span class="line"><span class="cl">  queueToService&#39; = Append(queueToService, [
+</span></span><span class="line"><span class="cl">    order |-&gt; o,
+</span></span><span class="line"><span class="cl">    prod |-&gt; d
+</span></span><span class="line"><span class="cl">  ])
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CreateOrder(o) == 
+</span></span><span class="line"><span class="cl">    /\ ~IsCreatedOrder(o)
+</span></span><span class="line"><span class="cl">    /\ \E nextDate \in Dates:
+</span></span><span class="line"><span class="cl">        /\ localOrders&#39; = [ localOrders EXCEPT  
+</span></span><span class="line"><span class="cl">                            ![o].version = @ + 1, 
+</span></span><span class="line"><span class="cl">                            ![o].productionDate = nextDate
+</span></span><span class="line"><span class="cl">                          ]
+</span></span><span class="line"><span class="cl">        /\ Request(o, nextDate)
+</span></span><span class="line"><span class="cl">    /\ UNCHANGED &lt;&lt; queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">UpdateOrder(o) ==
+</span></span><span class="line"><span class="cl">    /\ localOrders[o].version &lt;= 2
+</span></span><span class="line"><span class="cl">    /\ IsCreatedOrder(o)
+</span></span><span class="line"><span class="cl">    /\ \E nextDate \in Dates:
+</span></span><span class="line"><span class="cl">        /\ localOrders[o].productionDate /= nextDate
+</span></span><span class="line"><span class="cl">        /\ localOrders&#39; = [ localOrders EXCEPT  
+</span></span><span class="line"><span class="cl">                            ![o].version = @ + 1, 
+</span></span><span class="line"><span class="cl">                            ![o].productionDate = nextDate,
+</span></span><span class="line"><span class="cl">                            ![o].deliveryDate = 0
+</span></span><span class="line"><span class="cl">                          ]
+</span></span><span class="line"><span class="cl">        /\ Request(o, nextDate)
+</span></span><span class="line"><span class="cl">    /\ UNCHANGED &lt;&lt; queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ExternalServiceProcessRequest ==
+</span></span><span class="line"><span class="cl">  /\ Len(queueToService) &gt; 0
+</span></span><span class="line"><span class="cl">  /\ LET req == Head(queueToService) 
+</span></span><span class="line"><span class="cl">     IN 
+</span></span><span class="line"><span class="cl">        queueToLocal&#39; = Append(queueToLocal, [
+</span></span><span class="line"><span class="cl">          order |-&gt; req.order,
+</span></span><span class="line"><span class="cl">          delivery |-&gt; req.prod + 1
+</span></span><span class="line"><span class="cl">        ])
+</span></span><span class="line"><span class="cl">  /\ queueToService&#39; = Tail(queueToService)
+</span></span><span class="line"><span class="cl">  /\ UNCHANGED &lt;&lt; localOrders &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">LocalServiceProcessResponse ==
+</span></span><span class="line"><span class="cl">  /\ Len(queueToLocal) &gt; 0
+</span></span><span class="line"><span class="cl">  /\ LET resp == Head(queueToLocal) 
+</span></span><span class="line"><span class="cl">      IN
+</span></span><span class="line"><span class="cl">      localOrders&#39; = [ localOrders EXCEPT ![resp.order].deliveryDate = resp.delivery ]
+</span></span><span class="line"><span class="cl">  /\ queueToLocal&#39; = Tail(queueToLocal)
+</span></span><span class="line"><span class="cl">  /\ UNCHANGED &lt;&lt; queueToService &gt;&gt;
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">(* Step: either an action or a stuttering step if all orders have been changed three times *)
+</span></span><span class="line"><span class="cl">Next == 
+</span></span><span class="line"><span class="cl">  \/  \E o \in ORDERS:
+</span></span><span class="line"><span class="cl">      \/ CreateOrder(o)
+</span></span><span class="line"><span class="cl">      \/ UpdateOrder(o)
+</span></span><span class="line"><span class="cl">  \/ ExternalServiceProcessRequest
+</span></span><span class="line"><span class="cl">  \/ LocalServiceProcessResponse
+</span></span><span class="line"><span class="cl">  \/ /\ \A o \in ORDERS: 
+</span></span><span class="line"><span class="cl">          localOrders[o].version = 3
+</span></span><span class="line"><span class="cl">     /\ UNCHANGED vars
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Spec == 
+</span></span><span class="line"><span class="cl">    /\ Init 
+</span></span><span class="line"><span class="cl">    /\ [][Next]_vars
+</span></span><span class="line"><span class="cl">    /\ WF_vars(Next)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Invariants *)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Order is either unscheduled or its delivery date is equal or later than the production date *)
+</span></span><span class="line"><span class="cl">DeliveryUnsetOrAfterProduction ==
+</span></span><span class="line"><span class="cl">  \A o \in ORDERS:
+</span></span><span class="line"><span class="cl">    \/ ~IsScheduledOrder(o)
+</span></span><span class="line"><span class="cl">    \/ localOrders[o].deliveryDate &gt;= localOrders[o].productionDate
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Property *)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* If the delivery date is unset, then it will be set at some point in the future *)
+</span></span><span class="line"><span class="cl">GetsDeliveryDate == 
+</span></span><span class="line"><span class="cl">  \A o \in ORDERS:
+</span></span><span class="line"><span class="cl">    localOrders[o].deliveryDate = 0 ~&gt; localOrders[o].deliveryDate &gt; 0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">============================================================================</span></span></code></pre>
+</div><p>Checking the model finds the known problem using the same way: changing
+the order on the local system prior to processing the external service&rsquo; response
+for the initial order creation:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">$ tlc -config model.cfg model_err.tla 
+</span></span><span class="line"><span class="cl">TLC2 Version 2.19 of <span class="m">08</span> August <span class="m">2024</span> <span class="o">(</span>rev: 5a47802<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Running breadth-first search Model-Checking wit ....
+</span></span><span class="line"><span class="cl">Parsing file model_err.tla
+</span></span><span class="line"><span class="cl">Parsing file /tmp/Naturals.tla
+</span></span><span class="line"><span class="cl">Parsing file /tmp/Sequences.tla
+</span></span><span class="line"><span class="cl">Parsing file /tmp/FiniteSets.tla
+</span></span><span class="line"><span class="cl">Semantic processing of module Naturals
+</span></span><span class="line"><span class="cl">Semantic processing of module Sequences
+</span></span><span class="line"><span class="cl">Semantic processing of module FiniteSets
+</span></span><span class="line"><span class="cl">Semantic processing of module model_err
+</span></span><span class="line"><span class="cl">Starting... <span class="o">(</span>...<span class="o">)</span>
+</span></span><span class="line"><span class="cl">Implied-temporal checking--satisfiability problem has <span class="m">1</span> branches.
+</span></span><span class="line"><span class="cl">Computing initial states...
+</span></span><span class="line"><span class="cl">Finished computing initial states: <span class="m">1</span> distinct state generated at ....
+</span></span><span class="line"><span class="cl">Error: Invariant DeliveryUnsetOrAfterProduction is violated.
+</span></span><span class="line"><span class="cl">Error: The behavior up to this point is:
+</span></span><span class="line"><span class="cl">State 1: &lt;Initial predicate&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToService</span> <span class="o">=</span> &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">localOrders</span> <span class="o">=</span> <span class="o">(</span>o1 :&gt; <span class="o">[</span>version <span class="p">|</span>-&gt; 0, productionDate <span class="p">|</span>-&gt; 0, deliveryDate <span class="p">|</span>-&gt; 0<span class="o">])</span>
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToLocal</span> <span class="o">=</span> &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">State 2: &lt;CreateOrder line 37, col <span class="m">5</span> to line 44, col <span class="m">35</span> of module model_err&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToService</span> <span class="o">=</span> &lt;&lt;<span class="o">[</span>order <span class="p">|</span>-&gt; o1, prod <span class="p">|</span>-&gt; 1<span class="o">]</span>&gt;&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">localOrders</span> <span class="o">=</span> <span class="o">(</span>o1 :&gt; <span class="o">[</span>version <span class="p">|</span>-&gt; 1, productionDate <span class="p">|</span>-&gt; 1, deliveryDate <span class="p">|</span>-&gt; 0<span class="o">])</span>
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToLocal</span> <span class="o">=</span> &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">State 3: &lt;ExternalServiceProcessRequest line 60, col <span class="m">3</span> to line 68, col <span class="m">32</span> of module model_err&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToService</span> <span class="o">=</span> &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">localOrders</span> <span class="o">=</span> <span class="o">(</span>o1 :&gt; <span class="o">[</span>version <span class="p">|</span>-&gt; 1, productionDate <span class="p">|</span>-&gt; 1, deliveryDate <span class="p">|</span>-&gt; 0<span class="o">])</span>
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToLocal</span> <span class="o">=</span> &lt;&lt;<span class="o">[</span>order <span class="p">|</span>-&gt; o1, delivery <span class="p">|</span>-&gt; 2<span class="o">]</span>&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">State 4: &lt;UpdateOrder line 47, col <span class="m">5</span> to line 57, col <span class="m">35</span> of module model_err&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToService</span> <span class="o">=</span> &lt;&lt;<span class="o">[</span>order <span class="p">|</span>-&gt; o1, prod <span class="p">|</span>-&gt; 3<span class="o">]</span>&gt;&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">localOrders</span> <span class="o">=</span> <span class="o">(</span>o1 :&gt; <span class="o">[</span>version <span class="p">|</span>-&gt; 2, productionDate <span class="p">|</span>-&gt; 3, deliveryDate <span class="p">|</span>-&gt; 0<span class="o">])</span>
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToLocal</span> <span class="o">=</span> &lt;&lt;<span class="o">[</span>order <span class="p">|</span>-&gt; o1, delivery <span class="p">|</span>-&gt; 2<span class="o">]</span>&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">State 5: &lt;LocalServiceProcessResponse line 71, col <span class="m">3</span> to line 76, col <span class="m">35</span> of module model_err&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToService</span> <span class="o">=</span> &lt;&lt;<span class="o">[</span>order <span class="p">|</span>-&gt; o1, prod <span class="p">|</span>-&gt; 3<span class="o">]</span>&gt;&gt;
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">localOrders</span> <span class="o">=</span> <span class="o">(</span>o1 :&gt; <span class="o">[</span>version <span class="p">|</span>-&gt; 2, productionDate <span class="p">|</span>-&gt; 3, deliveryDate <span class="p">|</span>-&gt; 2<span class="o">])</span>
+</span></span><span class="line"><span class="cl">/<span class="se">\ </span><span class="nv">queueToLocal</span> <span class="o">=</span> &lt;&lt;&gt;&gt;</span></span></code></pre>
+</div><h3 id="fixed-implementation">Fixed Implementation</h3>
+<p>Fixing the model by using a version field in the orders, requests and responses:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">---------------------------- MODULE model_fixed ----------------------------
+</span></span><span class="line"><span class="cl">EXTENDS Naturals, Sequences, FiniteSets
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CONSTANTS
+</span></span><span class="line"><span class="cl">    ORDERS
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">VARIABLES
+</span></span><span class="line"><span class="cl">    localOrders,
+</span></span><span class="line"><span class="cl">    queueToService,
+</span></span><span class="line"><span class="cl">    queueToLocal
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">vars == &lt;&lt; localOrders, queueToService, queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Dates == 1..3
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Init == 
+</span></span><span class="line"><span class="cl">  /\ localOrders = [ o \in ORDERS |-&gt; 
+</span></span><span class="line"><span class="cl">      [
+</span></span><span class="line"><span class="cl">        version         |-&gt; 0,
+</span></span><span class="line"><span class="cl">        productionDate  |-&gt; 0,
+</span></span><span class="line"><span class="cl">        deliveryDate    |-&gt; 0
+</span></span><span class="line"><span class="cl">      ]
+</span></span><span class="line"><span class="cl">    ]
+</span></span><span class="line"><span class="cl">  /\ queueToService = &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">  /\ queueToLocal = &lt;&lt;&gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">IsCreatedOrder(o) == localOrders[o].version &gt; 0
+</span></span><span class="line"><span class="cl">IsScheduledOrder(o) == localOrders[o].deliveryDate &gt; 0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Request(o, d, v) == 
+</span></span><span class="line"><span class="cl">  queueToService&#39; = Append(queueToService, [
+</span></span><span class="line"><span class="cl">    order |-&gt; o,
+</span></span><span class="line"><span class="cl">    prod |-&gt; d,
+</span></span><span class="line"><span class="cl">    version |-&gt; v
+</span></span><span class="line"><span class="cl">  ])
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">CreateOrder(o) == 
+</span></span><span class="line"><span class="cl">    /\ ~IsCreatedOrder(o)
+</span></span><span class="line"><span class="cl">    /\ \E nextDate \in Dates:
+</span></span><span class="line"><span class="cl">        LET nextVersion == localOrders[o].version + 1
+</span></span><span class="line"><span class="cl">        IN
+</span></span><span class="line"><span class="cl">        /\ localOrders&#39; = [ localOrders EXCEPT  
+</span></span><span class="line"><span class="cl">                            ![o].version = nextVersion, 
+</span></span><span class="line"><span class="cl">                            ![o].productionDate = nextDate
+</span></span><span class="line"><span class="cl">                          ]
+</span></span><span class="line"><span class="cl">        /\ Request(o, nextDate, nextVersion)
+</span></span><span class="line"><span class="cl">    /\ UNCHANGED &lt;&lt; queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">UpdateOrder(o) ==
+</span></span><span class="line"><span class="cl">    /\ localOrders[o].version &lt;= 2
+</span></span><span class="line"><span class="cl">    /\ IsCreatedOrder(o)
+</span></span><span class="line"><span class="cl">    /\ \E nextDate \in Dates:
+</span></span><span class="line"><span class="cl">        LET nextVersion == localOrders[o].version + 1
+</span></span><span class="line"><span class="cl">        IN
+</span></span><span class="line"><span class="cl">        /\ localOrders[o].productionDate /= nextDate
+</span></span><span class="line"><span class="cl">        /\ localOrders&#39; = [ localOrders EXCEPT  
+</span></span><span class="line"><span class="cl">                            ![o].version = nextVersion, 
+</span></span><span class="line"><span class="cl">                            ![o].productionDate = nextDate,
+</span></span><span class="line"><span class="cl">                            ![o].deliveryDate = 0
+</span></span><span class="line"><span class="cl">                          ]
+</span></span><span class="line"><span class="cl">        /\ Request(o, nextDate, nextVersion)
+</span></span><span class="line"><span class="cl">    /\ UNCHANGED &lt;&lt; queueToLocal &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">ExternalServiceProcessRequest ==
+</span></span><span class="line"><span class="cl">  /\ Len(queueToService) &gt; 0
+</span></span><span class="line"><span class="cl">  /\ LET req == Head(queueToService) 
+</span></span><span class="line"><span class="cl">     IN 
+</span></span><span class="line"><span class="cl">        queueToLocal&#39; = Append(queueToLocal, [
+</span></span><span class="line"><span class="cl">          order |-&gt; req.order,
+</span></span><span class="line"><span class="cl">          delivery |-&gt; req.prod + 1,
+</span></span><span class="line"><span class="cl">          version |-&gt; req.version
+</span></span><span class="line"><span class="cl">        ])
+</span></span><span class="line"><span class="cl">  /\ queueToService&#39; = Tail(queueToService)
+</span></span><span class="line"><span class="cl">  /\ UNCHANGED &lt;&lt; localOrders &gt;&gt;
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">LocalServiceProcessResponse ==
+</span></span><span class="line"><span class="cl">  /\ Len(queueToLocal) &gt; 0
+</span></span><span class="line"><span class="cl">  /\ LET resp == Head(queueToLocal) 
+</span></span><span class="line"><span class="cl">      IN
+</span></span><span class="line"><span class="cl">      IF resp.version = localOrders[resp.order].version
+</span></span><span class="line"><span class="cl">      THEN
+</span></span><span class="line"><span class="cl">        localOrders&#39; = [ localOrders EXCEPT ![resp.order].deliveryDate = resp.delivery ]
+</span></span><span class="line"><span class="cl">      ELSE
+</span></span><span class="line"><span class="cl">        UNCHANGED &lt;&lt; localOrders &gt;&gt;
+</span></span><span class="line"><span class="cl">  /\ queueToLocal&#39; = Tail(queueToLocal)
+</span></span><span class="line"><span class="cl">  /\ UNCHANGED &lt;&lt; queueToService &gt;&gt;
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">Next == 
+</span></span><span class="line"><span class="cl">  \/  \E o \in ORDERS:
+</span></span><span class="line"><span class="cl">      \/ CreateOrder(o)
+</span></span><span class="line"><span class="cl">      \/ UpdateOrder(o)
+</span></span><span class="line"><span class="cl">  \/ ExternalServiceProcessRequest
+</span></span><span class="line"><span class="cl">  \/ LocalServiceProcessResponse
+</span></span><span class="line"><span class="cl">  \/ /\ \A o \in ORDERS: 
+</span></span><span class="line"><span class="cl">          localOrders[o].version = 3
+</span></span><span class="line"><span class="cl">     /\ UNCHANGED vars
+</span></span><span class="line"><span class="cl">  
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">Spec == 
+</span></span><span class="line"><span class="cl">    /\ Init 
+</span></span><span class="line"><span class="cl">    /\ [][Next]_vars
+</span></span><span class="line"><span class="cl">    /\ WF_vars(Next)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Invariants *)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">DeliveryUnsetOrAfterProduction ==
+</span></span><span class="line"><span class="cl">  \A o \in ORDERS:
+</span></span><span class="line"><span class="cl">    \/ ~IsScheduledOrder(o)
+</span></span><span class="line"><span class="cl">    \/ localOrders[o].deliveryDate &gt;= localOrders[o].productionDate
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">(* Property *)
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">GetsDeliveryDate == 
+</span></span><span class="line"><span class="cl">  \A o \in ORDERS:
+</span></span><span class="line"><span class="cl">    localOrders[o].deliveryDate = 0 ~&gt; localOrders[o].deliveryDate &gt; 0
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">============================================================================</span></span></code></pre>
+</div><p>This model passes all checks!</p>
+<h2 id="closing-remarks">Closing Remarks</h2>
+<p>I&rsquo;ve shown two ways to model a system and check some properties of their
+implementation.
+The main goal was to document the status quo of an existing system, not necessarily to
+design and check a new system from scratch.
+While formal modeling and model checking provide better safety guarantees and confidence,
+informal modeling using Python or another programming language can be sufficient for documentation
+purposes and when trying to reproduce bugs and issues discovered in production.</p>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

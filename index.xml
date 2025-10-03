@@ -7,8 +7,15 @@
     <generator>Hugo</generator>
     <language>en-us</language>
     <copyright>© bg 2024</copyright>
-    <lastBuildDate>Sun, 07 Sep 2025 20:50:00 +0200</lastBuildDate>
+    <lastBuildDate>Fri, 03 Oct 2025 00:50:00 +0200</lastBuildDate>
     <atom:link href="https://bgraf.github.io/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Simple Modeling of Concurrent Systems</title>
+      <link>https://bgraf.github.io/posts/2025/simple-modeling/</link>
+      <pubDate>Fri, 03 Oct 2025 00:50:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/2025/simple-modeling/</guid>
+      <description>&lt;p&gt;In this post I&amp;rsquo;ll model a simple distributed system twice: informally in Python tested by unit testing&#xA;and formally in TLA+ verified by model checking.&lt;/p&gt;&#xA;&lt;p&gt;Imagine a decade old system comprised of multiple independent subsystems like an ERP-system and some external services.&#xA;The system has been grown over a long time with changes now and then, but without a single person or team responsible to&#xA;keep a consistent vision. Also, the system is prone to various kinds of concurrency problems because considering&#xA;all of these special cases had been out of scope during development or had been simply overlooked.&#xA;These issues surface rarely enough to not create any immediate incentive to fix them.&#xA;In case an issue comes up, they are mitigated by human intervention.&#xA;Our job is to add new features to this system. In the best case also removing existing issues or&#xA;at least not adding any new ones.&lt;/p&gt;</description>
+    </item>
     <item>
       <title>Typeface Matters</title>
       <link>https://bgraf.github.io/posts/2025/typeface-matters/</link>

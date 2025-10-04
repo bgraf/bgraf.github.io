@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Notes – TLA⁺ Fairness | bg</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/fonts.css" />
+  
+
+  
+
+</head>
+
+<body>
+  <header>
+    <div style="display:flex; flex-direction: row; gap:30px">
+      <div>
+        
+        <a href="/">
+          <img src="/logo3.svg" alt="bg">
+        </a>
+      </div>
+      <div style="align-self:flex-end; margin-bottom: 15px;">
+        <nav style="display:flex; flex-direction: row; align-items: flex-start; gap:10px;">
+            <a title="Pages" href="/links">
+              Pages
+            </a>
+            <a title="Posts" href="/posts/">
+              Posts
+            </a>
+            <a title="RSS feed" href="/index.xml">
+              RSS
+            </a>
+          <hr />
+        </nav>
+      </div>
+    </div>
+
+  </header>
+<div class="article-meta">
+<h1><span class="title">Study Notes – TLA⁺ Fairness</span></h1>
+
+<h2 class="date">2025-10-04</h2>
+
+    <div class="tags">
+    
+        <a href="/tags/tla&#43;">TLA&#43;</a>
+    
+        <a href="/tags/study-notes">study notes</a>
+    
+    </div>
+
+</div>
+
+
+
+<main>
+<p>A TLA<sup>+</sup> specification</p>
+<p><code>Spec == Init /\ [][Next]_vars</code></p>
+<p>is a temporal logic formula that describes
+one or more initial states (<code>Init</code>) and how to derive a next state from a current state (<code>Next</code>).
+Besides these two components so-called <em>liveness</em> properties like weak- or strong-fairness can be
+added giving:</p>
+<p><code>Spec == Init /\ [][Next]_vars /\ Liveness</code></p>
+<p>What are weak- and strong fairness?</p>
+<h2 id="state-graph">State Graph</h2>
+<p>Suppose we track the behaviors in a state graph. Each node corresponds to a unique state
+and a directed edge (v,w) represents a valid step from state v to state w.
+At each node there&rsquo;s a stuttering self-loop that doesn&rsquo;t change the state and could loop forever.</p>
+<p>Every infinite path in the state graph could be a possible behavior of the system.
+Weak- and strong fairness exclude certain paths and therefore certain behaviors.</p>
+<figure><img src="/posts/2025/tla-fairness/graph.png"
+    alt="State Graph" width="100%"><figcaption>
+      <p>State Graph</p>
+    </figcaption>
+</figure>
+
+<p>Let&rsquo;s denote paths by sequences of node numbers, e.g.  <code>0 1 2 3 (4 5)+ 6+</code> with <code>X+</code> meaning one or more occurences of <code>X</code>.
+As paths are infinite, every path must end with a <code>+</code> symbol.</p>
+<p>In the example above the following are valid paths:</p>
+
+<div class="highlight" style="position: relative;">
+    
+    <pre class="chroma"
+        tabindex="0"><code class="language-txt" data-lang="txt"><span class="line"><span class="cl">P1 = 0 1 2+
+</span></span><span class="line"><span class="cl">P2 = 0 1 2 3+
+</span></span><span class="line"><span class="cl">P3 = 0 (1 2 3 4)+</span></span></code></pre>
+</div><h2 id="weak-fairness">Weak Fairness</h2>
+<p>Weak- and strong fairness set conditions on the looping suffix <code>... X+</code> of a path.</p>
+<p>Weak Fairness <code>WF_vars(Action)</code> implies that if <code>Action</code> is always enabled in <code>X</code>, then
+it is eventually taken.
+This is true for <code>WF_vars(B)</code> on path <code>P1</code> which remains stuttering in state <code>2</code> with action <code>B</code> enabled.
+Thus with liveness property <code>WF_vars(B)</code> path <code>P1</code> and any other path ending in <code>... 2+</code> is illegal behavior.
+Similarly <code>WF_vars(A)</code> makes path <code>P2</code> illegal because it keeps stuttering in state <code>3</code> with action <code>A</code>
+enabled.
+Nevertheless, paths <code>P1x = 0 1 2+ 3 ...</code> and <code>P2x = 0 1 2 3+ ...</code> are still possible.</p>
+<h2 id="strong-fairness">Strong Fairness</h2>
+<p>Consider path <code>P3 = 0 (1 2 3 4)+</code> which doesn&rsquo;t end in stuttering on a single state but a sequence of
+states.
+Action <code>A</code> is enabled in state <code>3</code>, but not in states <code>1</code>, <code>2</code> and <code>4</code>.
+Weak fairness would not hold for action <code>A</code> as it is not always enabled in the remainder of the behavior,
+but only sometimes.
+This is where strong fairness <code>SF_vars(A)</code> helps.
+It implies that if <code>A</code> is infinitely often enabled in the remainder of a behavior, then it is eventually
+taken.
+In other words, if <code>A</code> is enabled at least once in <code>X</code>, then it is eventuall taken and
+no legal path can end in <code>X+</code>.
+Thus, strong fairness makes behavior <code>P3</code> illegal, but <code>P3x = 0 (1 2 3 4)+ 5</code> remains legal.</p>
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

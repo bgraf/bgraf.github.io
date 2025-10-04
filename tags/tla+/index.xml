@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>TLA&#43; on bg</title>
+    <link>https://bgraf.github.io/tags/tla&#43;/</link>
+    <description>Recent content in TLA&#43; on bg</description>
+    <generator>Hugo</generator>
+    <language>en-us</language>
+    <copyright>© bg 2024</copyright>
+    <lastBuildDate>Sat, 04 Oct 2025 13:19:42 +0200</lastBuildDate>
+    <atom:link href="https://bgraf.github.io/tags/tla+/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Study Notes – TLA⁺ Fairness</title>
+      <link>https://bgraf.github.io/posts/2025/tla-fairness/</link>
+      <pubDate>Sat, 04 Oct 2025 13:19:42 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/2025/tla-fairness/</guid>
+      <description>&lt;p&gt;A TLA&lt;sup&gt;+&lt;/sup&gt; specification&lt;/p&gt;&#xA;&lt;p&gt;&lt;code&gt;Spec == Init /\ [][Next]_vars&lt;/code&gt;&lt;/p&gt;&#xA;&lt;p&gt;is a temporal logic formula that describes&#xA;one or more initial states (&lt;code&gt;Init&lt;/code&gt;) and how to derive a next state from a current state (&lt;code&gt;Next&lt;/code&gt;).&#xA;Besides these two components so-called &lt;em&gt;liveness&lt;/em&gt; properties like weak- or strong-fairness can be&#xA;added giving:&lt;/p&gt;&#xA;&lt;p&gt;&lt;code&gt;Spec == Init /\ [][Next]_vars /\ Liveness&lt;/code&gt;&lt;/p&gt;&#xA;&lt;p&gt;What are weak- and strong fairness?&lt;/p&gt;&#xA;&lt;h2 id=&#34;state-graph&#34;&gt;State Graph&lt;/h2&gt;&#xA;&lt;p&gt;Suppose we track the behaviors in a state graph. Each node corresponds to a unique state&#xA;and a directed edge (v,w) represents a valid step from state v to state w.&#xA;At each node there&amp;rsquo;s a stuttering self-loop that doesn&amp;rsquo;t change the state and could loop forever.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Simple Modeling of Concurrent Systems</title>
+      <link>https://bgraf.github.io/posts/2025/simple-modeling/</link>
+      <pubDate>Fri, 03 Oct 2025 00:50:00 +0200</pubDate>
+      <guid>https://bgraf.github.io/posts/2025/simple-modeling/</guid>
+      <description>&lt;p&gt;In this post I&amp;rsquo;ll model a simple distributed system twice: informally in Python tested by unit testing&#xA;and formally in TLA+ verified by model checking.&lt;/p&gt;&#xA;&lt;p&gt;Imagine a decade old system comprised of multiple independent subsystems like an ERP-system and some external services.&#xA;The system has been grown over a long time with changes now and then, but without a single person or team responsible to&#xA;keep a consistent vision. Also, the system is prone to various kinds of concurrency problems because considering&#xA;all of these special cases had been out of scope during development or had been simply overlooked.&#xA;These issues surface rarely enough to not create any immediate incentive to fix them.&#xA;In case an issue comes up, they are mitigated by human intervention.&#xA;Our job is to add new features to this system. In the best case also removing existing issues or&#xA;at least not adding any new ones.&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

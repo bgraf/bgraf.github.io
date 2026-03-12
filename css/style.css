@@ -1,9 +1,9 @@
 body {
   max-width: 800px;
-  margin: auto;
-  padding: 1em;
   line-height: 1.5;
-  background-color: rgb(255, 246, 236);
+  background-color: white;
+  margin: auto;
+  padding: 0 10pt 0 10pt;
 }
 
 li span.date {
@@ -16,11 +16,31 @@ li span.date {
 }
 
 /* header and footer areas */
+header nav {
+  display:flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: center; 
+  gap:20pt;
+}
+
+header {
+  margin:0 auto 10pt auto;
+  padding: 10pt;
+  border-bottom:1pt solid #00ae23;
+}
+
 header nav a {
+  font-weight: bold;
+  color: #00ae23;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 0pt;
+  text-decoration: none;
 }
+
+
 
 .menu {
   padding: 0;
@@ -30,6 +50,9 @@ header nav a {
   display: inline-block;
 }
 
+.article-meta {
+  text-align:center;
+}
 .article-meta,
 .menu a {
   text-decoration: none;
@@ -136,6 +159,7 @@ a.footnote-ref::after {
 
 .tags {
   display: flex;
+  justify-content: right;
   gap: 5px;
 }
 

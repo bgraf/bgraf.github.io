@@ -36,30 +36,15 @@
 
 <body>
   <header>
-    <div style="display:flex; flex-direction: row; gap:30px">
-      <div>
-        
-        <a href="/">
-          <img src="/logo3.svg" alt="bg">
-        </a>
-      </div>
-      <div style="align-self:flex-end; margin-bottom: 15px;">
-        <nav style="display:flex; flex-direction: row; align-items: flex-start; gap:10px;">
-            <a title="Pages" href="/links">
-              Pages
-            </a>
-            <a title="Posts" href="/posts/">
-              Posts
-            </a>
-            <a title="RSS feed" href="/index.xml">
-              RSS
-            </a>
-          <hr />
-        </nav>
-      </div>
-    </div>
-
+    <nav>
+        <a title="Home" href="/">Home</a>
+        <a title="Pages" href="/links">Pages</a>
+        <a title="Posts" href="/posts/">Posts</a>
+        <a title="RSS feed" href="/index.xml">RSS</a>
+    </nav>
   </header>
+  <main>
+
 <div class="article-meta">
 <h1><span class="title">Example: Branch &amp; Price for the GAP with SCIP</span></h1>
 
@@ -119,7 +104,8 @@ jobs \(J_q \subseteq J\).</p>
 <blockquote class="warning"><p>Note that \(W_k\) are not part of the model.
 They will come into focus again when we start generating columns.
 For now all columns correspond to feasible configurations, therefore the machines&rsquo; capacities are always
-respected.</p></blockquote>
+respected.</p>
+</blockquote>
 <p><strong>Example</strong>:</p>
 <figure><img src="/posts/bp-gap/opt.png" width="100%">
 </figure>
@@ -186,7 +172,8 @@ In our case these branching duals will only influence the objective function of 
 <blockquote class="info"><p>Let&rsquo;s say we would branch on a single column \(\lambda_q\).
 In the \(\lambda_q \leq 0\) branch we would need to ensure that we do not regenerate column \(q\).
 This would modify the pricing problem, probably making it harder.
-Therefore this branching scheme would be non-robust.</p></blockquote>
+Therefore this branching scheme would be non-robust.</p>
+</blockquote>
 <p>Any single column is valid only for a specific machine, but may cover one or more jobs.
 Therefore we need to solve one pricing subproblem for every machine.
 The dual values for the job constraints (2) will be used in all subproblems, the dual values for the
@@ -314,6 +301,7 @@ variables in the branching constraint, because there may be no LP feasible solut
 
 </main>
 
+  </main>
   <footer>
   
   
